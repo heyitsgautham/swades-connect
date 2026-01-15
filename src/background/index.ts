@@ -2,14 +2,27 @@
 import { saveData, deleteRecord, getData, initializeStorage } from '../shared/storage';
 import { acquireLock, releaseLock } from '../shared/lock';
 
-console.log('Swades Connect Service Worker loaded');
+console.log('🚀 Swades Connect Service Worker loaded');
 
 // Initialize storage on service worker startup
-initializeStorage();
+initializeStorage().then(() => {
+  console.log('✅ Storage initialized');
+}).catch((error) => {
+  console.error('❌ Storage initialization failed:', error);
+});
+
+// Keep service worker alive
+function keepAlive() {
+  const keepAliveInterval = setInterval(() => {
+    console.log('⏰ Service worker keepalive ping');
+  }, 20000);
+  return keepAliveInterval;
+}
+keepAlive();
 
 // Message handler
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  console.log('Message received in service worker:', message);
+  console.log('📨 Message received in service worker:', message);
 
   if (message.action === 'SAVE_DATA') {
     handleSaveData(message, sendResponse);
@@ -25,6 +38,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   sendResponse({ status: 'acknowledged' });
   return true;
 });
+
+console.log('✅ Message listener registered');
 
 async function handleSaveData(message: { data: { contacts?: unknown[]; opportunities?: unknown[]; activities?: unknown[] } }, sendResponse: (response: { success: boolean; error?: string }) => void) {
   const lockId = `save_${Date.now()}`;
