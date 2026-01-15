@@ -1,120 +1,226 @@
-// Service Worker - handles message routing and storage operations
 import { saveData, deleteRecord, getData, initializeStorage } from '../shared/storage';
 import { acquireLock, releaseLock } from '../shared/lock';
-
-console.log('🚀 Swades Connect Service Worker loaded');
+import type { ExtensionMessage, MessageResponse } from '../shared/messages';
+import type { Contact, Opportunity, Activity } from '../shared/types';
 
 // Initialize storage on service worker startup
 initializeStorage().then(() => {
-  console.log('✅ Storage initialized');
-}).catch((error) => {
-  console.error('❌ Storage initialization failed:', error);
+  console.log('[Service Worker] Storage initialized');
 });
 
-// Keep service worker alive
-function keepAlive() {
-  const keepAliveInterval = setInterval(() => {
-    console.log('⏰ Service worker keepalive ping');
-  }, 20000);
-  return keepAliveInterval;
-}
-keepAlive();
+/**
+ * Main message router using hybrid async pattern for MV3
+ * Chrome requires returning `true` to keep the channel open, then calling sendResponse
+ * The Promise-only pattern has known issues with some Chrome versions
+ * @see https://developer.chrome.com/docs/extensions/develop/concepts/messaging
+ */
+chrome.runtime.onMessage.addListener(
+  (message: ExtensionMessage, sender, sendResponse: (response: MessageResponse) => void): boolean => {
+    console.log('[Service Worker] Received message:', message.action, 'from', sender.url || 'popup/internal');
 
-// Message handler
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  console.log('📨 Message received in service worker:', message);
+    // Wrap async handler to use sendResponse callback
+    const handleAsync = async (): Promise<MessageResponse> => {
+      switch (message.action) {
+        case 'EXTRACT_DATA':
+          return handleExtractRequest(sender.tab?.id);
 
-  if (message.action === 'SAVE_DATA') {
-    handleSaveData(message, sendResponse);
-    return true; // Keep channel open for async response
-  } else if (message.action === 'DELETE_RECORD') {
-    handleDeleteRecord(message, sendResponse);
-    return true;
-  } else if (message.action === 'GET_DATA') {
-    handleGetData(sendResponse);
+        case 'EXTRACTION_COMPLETE':
+          return handleExtractionComplete(message);
+
+        case 'EXTRACTION_ERROR':
+          return handleExtractionError(message);
+
+        case 'GET_DATA':
+          return handleGetData();
+
+        case 'SAVE_DATA':
+          return handleSaveData(message);
+
+        case 'DELETE_RECORD':
+          return handleDeleteRecord(message);
+
+        case 'TEST':
+          console.log('[Service Worker] Test message received');
+          return { success: true, data: { message: 'Service worker is alive' } };
+
+        default:
+          console.warn('[Service Worker] Unknown message action:', (message as unknown as { action: string }).action);
+          return { success: false, error: 'Unknown action' };
+      }
+    };
+
+    // Execute async handler and send response
+    handleAsync()
+      .then(sendResponse)
+      .catch((error) => {
+        console.error('[Service Worker] Handler error:', error);
+        sendResponse({ success: false, error: error instanceof Error ? error.message : String(error) });
+      });
+
+    // Return true to indicate we will send response asynchronously
     return true;
   }
+);
 
-  sendResponse({ status: 'acknowledged' });
-  return true;
-});
-
-console.log('✅ Message listener registered');
-
-async function handleSaveData(message: { data: { contacts?: unknown[]; opportunities?: unknown[]; activities?: unknown[] } }, sendResponse: (response: { success: boolean; error?: string }) => void) {
-  const lockId = `save_${Date.now()}`;
+/**
+ * Handler: Extract data from active tab
+ * Uses chrome.tabs.sendMessage to communicate with content script
+ */
+async function handleExtractRequest(tabId: number | undefined): Promise<MessageResponse> {
+  if (!tabId) {
+    return { success: false, error: 'No active tab - message must come from a tab with content script' };
+  }
 
   try {
-    // Acquire lock to prevent concurrent writes
+    // Use promise-based chrome.tabs.sendMessage (MV3 pattern)
+    const response = await chrome.tabs.sendMessage(tabId, { action: 'EXTRACT_DATA' });
+    console.log('[Service Worker] Extraction response from content script:', response);
+    return response;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Service Worker] Error sending to content script:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Handler: Process extraction complete
+ * Saves extracted data to storage with lock protection
+ */
+async function handleExtractionComplete(message: ExtensionMessage): Promise<MessageResponse> {
+  const lockId = `extraction_${Date.now()}`;
+
+  try {
     const locked = await acquireLock(lockId);
     if (!locked) {
-      sendResponse({ success: false, error: 'Could not acquire lock' });
-      return;
+      return { success: false, error: 'Could not acquire lock' };
     }
 
-    const { contacts, opportunities, activities } = message.data;
-    await saveData(
-      (contacts || []) as Parameters<typeof saveData>[0],
-      (opportunities || []) as Parameters<typeof saveData>[1],
-      (activities || []) as Parameters<typeof saveData>[2]
-    );
+    const { contacts, opportunities, activities } = (message as unknown as { data: { contacts: Contact[]; opportunities: Opportunity[]; activities: Activity[] } }).data;
 
-    // Broadcast update to all popups
-    chrome.runtime.sendMessage({
-      action: 'STORAGE_UPDATED',
-      data: await getData(),
-    }).catch(() => {
-      // Ignore errors if no popup is open
+    await saveData(contacts, opportunities, activities);
+
+    console.log('[Service Worker] Data saved to storage:', {
+      contactsCount: contacts.length,
+      opportunitiesCount: opportunities.length,
+      activitiesCount: activities.length,
     });
 
-    sendResponse({ success: true });
+    // Broadcast update to all popups (fire and forget)
+    broadcastStorageUpdate();
+
+    return { success: true };
   } catch (error) {
-    console.error('Error saving data:', error);
-    sendResponse({ success: false, error: String(error) });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Service Worker] Error processing extraction:', errorMessage);
+    return { success: false, error: errorMessage };
   } finally {
     await releaseLock(lockId);
   }
 }
 
-async function handleDeleteRecord(message: { data: { type: 'contacts' | 'opportunities' | 'activities'; id: string } }, sendResponse: (response: { success: boolean; error?: string }) => void) {
-  try {
-    const { type, id } = message.data;
-    await deleteRecord(type, id);
-    
-    // Broadcast update after delete
-    chrome.runtime.sendMessage({
-      action: 'STORAGE_UPDATED',
-      data: await getData(),
-    }).catch(() => {
-      // Ignore errors if no popup is open
-    });
-    
-    sendResponse({ success: true });
-  } catch (error) {
-    console.error('Error deleting record:', error);
-    sendResponse({ success: false, error: String(error) });
-  }
+/**
+ * Handler: Process extraction error from content script
+ */
+async function handleExtractionError(message: ExtensionMessage): Promise<MessageResponse> {
+  console.error('[Service Worker] Extraction error reported:', message.error);
+  return { success: true, data: { acknowledgement: 'Error logged' } };
 }
 
-async function handleGetData(sendResponse: (response: { success: boolean; data?: Awaited<ReturnType<typeof getData>>; error?: string }) => void) {
+/**
+ * Handler: Get all stored data
+ */
+async function handleGetData(): Promise<MessageResponse> {
   try {
     const data = await getData();
-    sendResponse({ success: true, data });
+    return { success: true, data };
   } catch (error) {
-    console.error('Error retrieving data:', error);
-    sendResponse({ success: false, error: String(error) });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Service Worker] Error retrieving data:', errorMessage);
+    return { success: false, error: errorMessage };
   }
 }
 
-// Listen to storage changes and broadcast to all listeners
+/**
+ * Handler: Save/merge data to storage
+ */
+async function handleSaveData(message: ExtensionMessage): Promise<MessageResponse> {
+  const lockId = `save_${Date.now()}`;
+
+  try {
+    const locked = await acquireLock(lockId);
+    if (!locked) {
+      return { success: false, error: 'Could not acquire lock' };
+    }
+
+    const messageData = (message as unknown as { data: { contacts?: Contact[]; opportunities?: Opportunity[]; activities?: Activity[] } }).data;
+    const { contacts = [], opportunities = [], activities = [] } = messageData;
+
+    await saveData(contacts, opportunities, activities);
+    broadcastStorageUpdate();
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Service Worker] Error saving data:', errorMessage);
+    return { success: false, error: errorMessage };
+  } finally {
+    await releaseLock(lockId);
+  }
+}
+
+/**
+ * Handler: Delete individual record
+ */
+async function handleDeleteRecord(message: ExtensionMessage): Promise<MessageResponse> {
+  try {
+    const { type, id } = (message as unknown as { data: { type: 'contacts' | 'opportunities' | 'activities'; id: string } }).data;
+
+    if (!type || !id) {
+      return { success: false, error: 'Missing type or id' };
+    }
+
+    await deleteRecord(type, id);
+    broadcastStorageUpdate();
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Service Worker] Error deleting record:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Utility: Broadcast storage update to all listeners
+async function broadcastStorageUpdate() {
+  try {
+    const data = await getData();
+
+    // Broadcast to all popup windows
+    chrome.runtime.sendMessage(
+      {
+        action: 'STORAGE_UPDATED',
+        data,
+      },
+      () => {
+        // Ignore errors if no popup is listening
+        if (chrome.runtime.lastError) {
+          console.debug('No popup listening for storage update');
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Error broadcasting storage update:', error);
+  }
+}
+
+// Listen to storage changes directly
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local' && changes.odoo_data) {
-    console.log('Storage updated, broadcasting to popups');
-    chrome.runtime.sendMessage({
-      action: 'STORAGE_UPDATED',
-      data: changes.odoo_data.newValue,
-    }).catch(() => {
-      // Ignore errors if no popup is listening
-    });
+    console.log('Local storage changed, broadcasting update');
+    broadcastStorageUpdate();
   }
 });
+
+// Handle extension uninstall
+chrome.runtime.setUninstallURL('https://github.com/heyitsgautham/swades-connect');
