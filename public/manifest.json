@@ -10,7 +10,8 @@
     "tabs"
   ],
   "host_permissions": [
-    "*://*.odoo.com/*"
+    "*://*.odoo.com/*",
+    "file://*/*"
   ],
   "action": {
     "default_title": "Swades Connect",
@@ -21,7 +22,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.odoo.com/*"],
+      "matches": ["*://*.odoo.com/*", "file://*/*"],
       "js": ["src/content/index.ts"],
       "run_at": "document_end"
     }

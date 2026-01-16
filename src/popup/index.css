@@ -1,9 +1,66 @@
+/* Google Fonts - Inter for body, Oswald for headings */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap');
+
+/* Tailwind CSS */
 @import "tailwindcss";
 
-body {
+/* Design System - CSS Custom Properties */
+:root {
+  /* Color Palette */
+  --color-primary: #973131;
+  --color-accent: #FFF4DB;
+  --color-background: #FFFFFF;
+  --color-text: #1D1D28;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-success: #16a34a;
+  --color-error: #dc2626;
+
+  /* Typography - Based on colour-palette.md */
+  --font-heading: 'Oswald', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Font Sizes (scaled for popup) */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 28px;
+}
+
+/* Base Styles */
+* {
   margin: 0;
   padding: 0;
-  width: 400px;
-  height: 600px;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  width: 500px;
+  min-height: 400px;
+  max-height: 600px;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Heading styles */
+h1, h2, h3, .heading {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }

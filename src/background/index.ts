@@ -65,20 +65,41 @@ chrome.runtime.onMessage.addListener(
 /**
  * Handler: Extract data from active tab
  * Uses chrome.tabs.sendMessage to communicate with content script
+ * If tabId is not provided (e.g., from popup), queries for active tab
  */
 async function handleExtractRequest(tabId: number | undefined): Promise<MessageResponse> {
-  if (!tabId) {
-    return { success: false, error: 'No active tab - message must come from a tab with content script' };
+  let targetTabId = tabId;
+
+  // If no tabId provided (message from popup), get the active tab
+  if (!targetTabId) {
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      targetTabId = tabs[0]?.id;
+    } catch (error) {
+      console.error('[Service Worker] Error querying active tab:', error);
+    }
+  }
+
+  if (!targetTabId) {
+    return { success: false, error: 'No active tab found. Please open an Odoo page first.' };
   }
 
   try {
     // Use promise-based chrome.tabs.sendMessage (MV3 pattern)
-    const response = await chrome.tabs.sendMessage(tabId, { action: 'EXTRACT_DATA' });
+    const response = await chrome.tabs.sendMessage(targetTabId, { action: 'EXTRACT_DATA' });
     console.log('[Service Worker] Extraction response from content script:', response);
     return response;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('[Service Worker] Error sending to content script:', errorMessage);
+    
+    // Provide a more helpful error message
+    if (errorMessage.includes('Receiving end does not exist')) {
+      return { 
+        success: false, 
+        error: 'Content script not loaded. Make sure you are on an Odoo page and refresh if needed.' 
+      };
+    }
     return { success: false, error: errorMessage };
   }
 }
