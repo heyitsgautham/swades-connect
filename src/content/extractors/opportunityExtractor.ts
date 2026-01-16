@@ -1,4 +1,22 @@
 import type { Opportunity } from '../../shared/types';
+import { lookupOpportunityId, initializeOpportunityIdCacheFromStorage } from '../idCache';
+
+/**
+ * Generate a stable, content-based ID for records where we can't get the real Odoo ID.
+ * Uses a simple hash of the content to create a deterministic ID.
+ */
+function generateContentHash(prefix: string, ...parts: (string | number)[]): string {
+  const content = parts.map(p => String(p).trim().toLowerCase()).join('|');
+  // Simple hash function (djb2)
+  let hash = 5381;
+  for (let i = 0; i < content.length; i++) {
+    hash = ((hash << 5) + hash) + content.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // Convert to positive number and then to base36 for shorter string
+  const positiveHash = (hash >>> 0).toString(36);
+  return `${prefix}_${positiveHash}`;
+}
 
 /**
  * Parse currency strings like "₹ 0.00" or "₹ 1,234.56" to numbers
@@ -26,9 +44,8 @@ function parseRevenue(revenueText: string): number {
  */
 function extractOpportunityFromRow(row: HTMLElement): Opportunity | null {
   try {
-    // Get record ID from data-id attribute (e.g., "datapoint_52")
-    const dataId = row.getAttribute('data-id') || '';
-    const id = dataId || `opp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    // We'll generate a content-based ID after extracting the data
+    // because Odoo's data-id (e.g., "datapoint_52") changes between page loads
 
     // Opportunity Name: td[name="name"] → use data-tooltip attribute
     const nameCell = row.querySelector('td[name="name"]');
@@ -79,6 +96,13 @@ function extractOpportunityFromRow(row: HTMLElement): Opportunity | null {
     const closeDateCell = row.querySelector('td[name="date_deadline"], td[name="date_closed"]');
     const closeDate = closeDateCell?.textContent?.trim() || '';
 
+    // Try to get real Odoo ID from cache (populated by web_search_read RPC calls)
+    // Fall back to content-based hash if not found
+    const realId = lookupOpportunityId(name);
+    const id = realId !== null 
+      ? `opp_${realId}` 
+      : generateContentHash('opp', name, stage, revenue);
+
     return {
       id,
       name,
@@ -101,9 +125,8 @@ function extractOpportunityFromKanbanCard(
   stageName: string
 ): Opportunity | null {
   try {
-    // Record ID: article.o_kanban_record[data-id]
-    const dataId = card.getAttribute('data-id') || '';
-    const id = dataId || `opp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    // We'll generate a content-based ID after extracting the data
+    // because Odoo's data-id (e.g., "datapoint_39") changes between page loads
 
     // Opportunity Name: article.o_kanban_record > span.fw-bold.fs-5
     const nameSpan = card.querySelector(':scope > span.fw-bold.fs-5');
@@ -143,6 +166,13 @@ function extractOpportunityFromKanbanCard(
     const closeDateElement = card.querySelector('[name="date_deadline"], [name="date_closed"]');
     const closeDate = closeDateElement?.textContent?.trim() || '';
 
+    // Try to get real Odoo ID from cache (populated by web_search_read RPC calls)
+    // Fall back to content-based hash if not found
+    const realId = lookupOpportunityId(name);
+    const id = realId !== null 
+      ? `opp_${realId}` 
+      : generateContentHash('opp', name, stage, revenue);
+
     return {
       id,
       name,
@@ -160,11 +190,19 @@ function extractOpportunityFromKanbanCard(
 /**
  * Main function to extract opportunities from the current view
  * Automatically detects list or kanban view
+ * 
+ * Pre-populates the ID cache from storage to address the timing issue
+ * where web_search_read happens before the RPC interceptor is installed.
  */
-export function extractOpportunities(): Opportunity[] {
+export async function extractOpportunities(): Promise<Opportunity[]> {
   const opportunities: Opportunity[] = [];
 
   try {
+    // Pre-populate ID cache from storage to get real Odoo IDs
+    // This addresses the timing issue where web_search_read happens
+    // before the RPC interceptor is installed
+    await initializeOpportunityIdCacheFromStorage();
+
     // Check for list view first
     const listRows = document.querySelectorAll('tr.o_data_row');
 

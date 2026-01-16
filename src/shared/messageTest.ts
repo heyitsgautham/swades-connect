@@ -33,7 +33,7 @@ export async function testMessagePassing() {
   }
 }
 
-function sendMessage(message: any): Promise<any> {
+function sendMessage(message: { action: string; data?: unknown }): Promise<{ success: boolean; data?: unknown; error?: string }> {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(message, (response) => {
       if (chrome.runtime.lastError) {

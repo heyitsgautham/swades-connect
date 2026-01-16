@@ -51,21 +51,48 @@ export function extractContacts(): Contact[] {
 }
 
 /**
+ * Extracts the real Odoo record ID from an avatar image URL.
+ * Pattern: /web/image/{model}/{id}/avatar_128 or similar
+ * Example: /web/image/res.partner/3/avatar_128 → returns "3"
+ */
+function extractIdFromAvatarUrl(row: HTMLElement, model: string): string | null {
+  try {
+    const avatarImg = row.querySelector('img[src*="/web/image/"]') as HTMLImageElement;
+    if (avatarImg && avatarImg.src) {
+      // Pattern: /web/image/res.partner/123/avatar
+      const regex = new RegExp(`/web/image/${model.replace('.', '\\.')}/(\\d+)/`);
+      const match = avatarImg.src.match(regex);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Extracts a contact from a list view row.
  * Uses data-tooltip attributes for clean text values.
  */
 function extractContactFromRow(row: HTMLElement, index: number): Contact | null {
   try {
-    // Get record ID from data-id attribute
-    const id = row.getAttribute('data-id') || `contact_${index}`;
+    // Get the REAL record ID from avatar image URL (not the datapoint_XX which changes)
+    // Pattern: /web/image/res.partner/{id}/avatar_128
+    const realId = extractIdFromAvatarUrl(row, 'res.partner');
+    const id = realId ? `contact_${realId}` : `contact_idx_${index}`;
 
     // Extract name from td[name="complete_name"] using data-tooltip
     const nameCell = row.querySelector('td[name="complete_name"]');
-    const name = getTooltipOrText(nameCell);
+    const rawCompleteName = getTooltipOrText(nameCell);
 
-    if (!name) {
+    if (!rawCompleteName) {
       return null;
     }
+
+    // Parse the complete_name which may be in "company, person name" format
+    const parsedName = parseCompleteName(rawCompleteName);
 
     // Extract email from td[name="email"] using data-tooltip
     const emailCell = row.querySelector('td[name="email"]');
@@ -75,11 +102,13 @@ function extractContactFromRow(row: HTMLElement, index: number): Contact | null 
     const phoneCell = row.querySelector('td[name="phone"]');
     const phone = getTooltipOrText(phoneCell);
 
-    // Extract company - try parent_id first, then company_name
+    // Extract company - try parent_id first, then company_name, then use parsed company from complete_name
     const companyCell =
       row.querySelector('td[name="parent_id"]') ||
       row.querySelector('td[name="company_name"]');
-    const company = getTooltipOrText(companyCell);
+    const explicitCompany = getTooltipOrText(companyCell);
+    // Use explicit company field if available, otherwise use parsed company from complete_name
+    const company = explicitCompany || parsedName.company;
 
     // Extract country as fallback info (stored in salesperson for now)
     const countryCell = row.querySelector('td[name="country_id"]');
@@ -91,7 +120,7 @@ function extractContactFromRow(row: HTMLElement, index: number): Contact | null 
 
     return {
       id,
-      name,
+      name: parsedName.name,
       email: email || '',
       phone: phone || '',
       company: company || '',
@@ -109,8 +138,10 @@ function extractContactFromRow(row: HTMLElement, index: number): Contact | null 
  */
 function extractContactFromKanbanCard(card: HTMLElement, index: number): Contact | null {
   try {
-    // Get record ID from data-id attribute
-    const id = card.getAttribute('data-id') || `contact_${index}`;
+    // Get the REAL record ID from avatar image URL (not the datapoint_XX which changes)
+    // Pattern: /web/image/res.partner/{id}/avatar_128
+    const realId = extractIdFromAvatarUrl(card, 'res.partner');
+    const id = realId ? `contact_${realId}` : `contact_idx_${index}`;
 
     // Extract name: Use flexible selector that matches Odoo v19 kanban structure
     // Odoo typically uses: <main><div class="mb-1"><span class="mb-0 fw-bold fs-5">Name</span></div></main>
@@ -121,11 +152,14 @@ function extractContactFromKanbanCard(card: HTMLElement, index: number): Contact
       card.querySelector('main span.fw-bold') ||
       card.querySelector('.fw-bold');
 
-    const name = nameElement?.textContent?.trim() || '';
+    const rawName = nameElement?.textContent?.trim() || '';
 
-    if (!name) {
+    if (!rawName) {
       return null;
     }
+
+    // Parse the name which may be in "company, person name" format
+    const parsedName = parseCompleteName(rawName);
 
     // Extract email: look for fa-envelope icon and get sibling span
     const email = extractFieldByIcon(card, 'fa-envelope');
@@ -136,15 +170,16 @@ function extractContactFromKanbanCard(card: HTMLElement, index: number): Contact
     // Extract location/country: look for fa-map-marker icon
     const contactLocation = extractFieldByIcon(card, 'fa-map-marker');
 
-    // Extract company: look for company-related content
-    const company = extractCompanyFromKanban(card);
+    // Extract company: look for company-related content, or use parsed company from name
+    const explicitCompany = extractCompanyFromKanban(card);
+    const company = explicitCompany || parsedName.company;
 
     // Extract salesperson if available
     const salesperson = extractSalespersonFromKanban(card);
 
     return {
       id,
-      name,
+      name: parsedName.name,
       email: email || '',
       phone: phone || '',
       company: company || contactLocation, // Use location as company fallback if no explicit company
@@ -264,4 +299,38 @@ function extractSalespersonFromKanban(card: HTMLElement): string {
   } catch {
     return '';
   }
+}
+
+/**
+ * Parses a complete_name field that may contain "company, person name" format.
+ * In Odoo, when a contact has a parent company, the complete_name is formatted as:
+ * "Company Name, Person Name"
+ * 
+ * @param completeName - The raw complete_name value from Odoo
+ * @returns Object with parsed name and company, or just name if no comma present
+ */
+function parseCompleteName(completeName: string): { name: string; company: string } {
+  if (!completeName) {
+    return { name: '', company: '' };
+  }
+
+  // Check if the name contains a comma (indicating "company, person" format)
+  const commaIndex = completeName.indexOf(',');
+  
+  if (commaIndex !== -1) {
+    // Format: "Company Name, Person Name"
+    const companyPart = completeName.substring(0, commaIndex).trim();
+    const personPart = completeName.substring(commaIndex + 1).trim();
+    
+    // Only use this parsing if both parts are non-empty
+    if (companyPart && personPart) {
+      return {
+        name: personPart,
+        company: companyPart,
+      };
+    }
+  }
+
+  // No comma or invalid format - return the whole string as name
+  return { name: completeName.trim(), company: '' };
 }

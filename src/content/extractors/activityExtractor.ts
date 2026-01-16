@@ -1,11 +1,53 @@
 import type { Activity } from '../../shared/types';
+import { lookupActivityId, initializeActivityIdCacheFromStorage } from '../idCache';
+
+/**
+ * Generate a stable, content-based ID for records where we can't get the real Odoo ID.
+ * Uses a simple hash of the content to create a deterministic ID.
+ */
+function generateContentHash(prefix: string, ...parts: (string | number)[]): string {
+  const content = parts.map(p => String(p).trim().toLowerCase()).join('|');
+  // Simple hash function (djb2)
+  let hash = 5381;
+  for (let i = 0; i < content.length; i++) {
+    hash = ((hash << 5) + hash) + content.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // Convert to positive number and then to base36 for shorter string
+  const positiveHash = (hash >>> 0).toString(36);
+  return `${prefix}_${positiveHash}`;
+}
+
+/**
+ * Generate an activity ID, preferring real Odoo ID from cache over content hash
+ * @param summary - The activity summary to look up
+ * @param fallbackParts - Parts to use for content hash if not found in cache
+ * @returns Activity ID in format `act_{id}` or `act_{hash}`
+ */
+function generateActivityId(summary: string, ...fallbackParts: (string | number)[]): string {
+  // Try to get real Odoo ID from cache
+  const realId = lookupActivityId(summary);
+  if (realId !== null) {
+    return `act_${realId}`;
+  }
+  
+  // Fall back to content hash
+  return generateContentHash('act', ...fallbackParts);
+}
 
 /**
  * Main function to extract activities from the current Odoo page.
  * Handles both list and kanban views.
+ * 
+ * This is an async function to allow initializing the ID cache from storage
+ * before extraction, addressing the timing issue where web_search_read
+ * happens before the RPC interceptor is installed.
  */
-export function extractActivities(): Activity[] {
+export async function extractActivities(): Promise<Activity[]> {
   const activities: Activity[] = [];
+  
+  // Initialize activity ID cache from storage to get previously captured real IDs
+  await initializeActivityIdCacheFromStorage();
 
   try {
     // Check for list view first
@@ -59,8 +101,9 @@ export function extractActivities(): Activity[] {
  */
 function extractActivityFromRow(row: HTMLElement, index: number): Activity | null {
   try {
-    // Get record ID from data-id attribute (e.g., "datapoint_23")
-    const id = row.getAttribute('data-id') || `activity_${index}`;
+    // We'll generate a content-based ID after extracting the data
+    // because Odoo's data-id (e.g., "datapoint_23") changes between page loads
+    void index; // Index kept for function signature compatibility
 
     // Extract summary from td[name="summary"]
     const summaryCell = row.querySelector('td[name="summary"]');
@@ -97,6 +140,9 @@ function extractActivityFromRow(row: HTMLElement, index: number): Activity | nul
                    row.querySelector('.o_activity_done') !== null;
     const status: Activity['status'] = isDone ? 'done' : 'open';
 
+    // Generate activity ID - prefer real Odoo ID from cache, fall back to content hash
+    const id = generateActivityId(summary, summary, type, dueDate, assignedTo);
+
     return {
       id,
       type,
@@ -124,8 +170,9 @@ function extractActivityFromRow(row: HTMLElement, index: number): Activity | nul
  */
 function extractActivityFromKanbanCard(card: HTMLElement, index: number): Activity | null {
   try {
-    // Get record ID from data-id attribute
-    const id = card.getAttribute('data-id') || `activity_${index}`;
+    // We'll generate a content-based ID after extracting the data
+    // because Odoo's data-id (e.g., "datapoint_XX") changes between page loads
+    void index; // Index kept for function signature compatibility
 
     // Extract summary - typically the second span.text-truncate
     // In the kanban, the first truncate has the linked record, second has summary
@@ -195,6 +242,9 @@ function extractActivityFromKanbanCard(card: HTMLElement, index: number): Activi
     const isDone = card.classList.contains('o_activity_done') ||
                    card.querySelector('.o_activity_done') !== null;
     const status: Activity['status'] = isDone ? 'done' : 'open';
+
+    // Generate activity ID - prefer real Odoo ID from cache, fall back to content hash
+    const id = generateActivityId(summary, summary, type, dueDate, assignedTo);
 
     return {
       id,

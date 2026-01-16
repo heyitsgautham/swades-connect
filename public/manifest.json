@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Swades Connect - Odoo CRM Extractor",
-  "version": "0.1.0",
-  "description": "Extract Contacts, Opportunities, and Activities from Odoo CRM",
+  "name": "Swades Connect",
+  "version": "1.0.0",
+  "description": "A Chrome extension that extracts Contacts, Opportunities, and Activities from Odoo CRM. Features automatic data extraction, local storage, search/filter capabilities, and CSV export functionality.",
   "permissions": [
     "activeTab",
     "scripting",
@@ -10,7 +10,7 @@
     "tabs"
   ],
   "host_permissions": [
-    "*://*.odoo.com/*",
+    "https://*.odoo.com/*",
     "file://*/*"
   ],
   "action": {
@@ -22,14 +22,20 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.odoo.com/*", "file://*/*"],
+      "matches": ["https://*.odoo.com/*", "file://*/*"],
       "js": ["src/content/index.ts"],
-      "run_at": "document_end"
+      "run_at": "document_start"
     }
   ],
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["rpc-interceptor.js"],
+      "matches": ["https://*.odoo.com/*"]
+    }
+  ]
 }

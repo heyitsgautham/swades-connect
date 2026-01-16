@@ -1,3 +1,5 @@
+import type { Contact, Opportunity, Activity } from './types';
+
 // Message action types
 export type MessageAction = 
   | 'EXTRACT_DATA'
@@ -6,14 +8,23 @@ export type MessageAction =
   | 'GET_DATA'
   | 'SAVE_DATA'
   | 'DELETE_RECORD'
+  | 'DELETE_ALL_RECORDS'
+  | 'TOGGLE_AUTO_EXTRACT'
+  | 'TOGGLE_RPC_SYNC'
+  | 'UPDATE_BADGE'
   | 'STORAGE_UPDATED'
   | 'EXTRACT_STATUS'
+  | 'ODOO_RPC_UPSERT'
+  | 'ODOO_RPC_DELETE'
   | 'TEST';
+
+// Data type for RPC messages
+export type DataType = 'contacts' | 'opportunities' | 'activities';
 
 // Base message interface
 export interface Message {
   action: MessageAction;
-  data?: any;
+  data?: unknown;
   error?: string;
   timestamp?: number;
 }
@@ -32,9 +43,9 @@ export interface ExtractDataMessage extends Message {
 export interface ExtractionCompleteMessage extends Message {
   action: 'EXTRACTION_COMPLETE';
   data: {
-    contacts: any[];
-    opportunities: any[];
-    activities: any[];
+    contacts: Contact[];
+    opportunities: Opportunity[];
+    activities: Activity[];
     metadata: {
       viewType: string;
       dataModel: string;
@@ -49,9 +60,9 @@ export interface ExtractionCompleteMessage extends Message {
 export interface SaveDataMessage extends Message {
   action: 'SAVE_DATA';
   data: {
-    contacts?: any[];
-    opportunities?: any[];
-    activities?: any[];
+    contacts?: Contact[];
+    opportunities?: Opportunity[];
+    activities?: Activity[];
   };
 }
 
@@ -68,11 +79,35 @@ export interface DeleteRecordMessage extends Message {
 export interface StorageUpdatedMessage extends Message {
   action: 'STORAGE_UPDATED';
   data: {
-    contacts: any[];
-    opportunities: any[];
-    activities: any[];
+    contacts: Contact[];
+    opportunities: Opportunity[];
+    activities: Activity[];
     lastSync: number;
   };
+}
+
+// Typed message for RPC upsert (create or update)
+export interface RpcUpsertMessage extends Message {
+  action: 'ODOO_RPC_UPSERT';
+  data: {
+    type: DataType;
+    records: (Contact | Opportunity | Activity)[];
+  };
+}
+
+// Typed message for RPC delete
+export interface RpcDeleteMessage extends Message {
+  action: 'ODOO_RPC_DELETE';
+  data: {
+    type: DataType;
+    ids: string[];
+  };
+}
+
+// Typed message for toggle RPC sync
+export interface ToggleRpcSyncMessage extends Message {
+  action: 'TOGGLE_RPC_SYNC';
+  enabled: boolean;
 }
 
 // Union type for all messages
@@ -82,11 +117,14 @@ export type ExtensionMessage =
   | SaveDataMessage
   | DeleteRecordMessage
   | StorageUpdatedMessage
+  | RpcUpsertMessage
+  | RpcDeleteMessage
+  | ToggleRpcSyncMessage
   | Message;
 
 // Response interface
 export interface MessageResponse {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
 }
