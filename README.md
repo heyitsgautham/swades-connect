@@ -21,7 +21,7 @@ A Chrome Extension (Manifest V3) that extracts **Contacts**, **Opportunities**, 
 
 ## 🎥 Demo Video
 
-> **[Watch the Demo Video](https://your-video-link-here)** - 3-5 minute demonstration showing:
+> **[Watch the Demo Video](https://youtu.be/Byhxi2gPe-w)** - 3-5 minute demonstration showing:
 > - Extraction from live Odoo CRM
 > - Data persistence after page refresh
 > - Popup dashboard functionality
