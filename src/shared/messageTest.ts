@@ -22,7 +22,7 @@ export async function testMessagePassing() {
     const saveResponse = await sendMessage({
       action: 'SAVE_DATA',
       data: {
-        contacts: [{ id: 'test_1', name: 'Test Contact', email: 'test@example.com', phone: '', company: '', salesperson: '' }],
+        contacts: [{ id: 'test_1', name: 'Test Contact', email: 'test@example.com', phone: '', company: '', country: '' }],
       },
     });
     console.log('✓ Data saved:', saveResponse);

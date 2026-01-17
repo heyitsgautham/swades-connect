@@ -1,6 +1,57 @@
 export interface PaginationConfig {
   maxPages?: number;        // Safety limit (default: 50)
   delayBetweenPages?: number; // ms to wait after clicking next (default: 1500)
+  waitForRpcCache?: boolean; // Wait for RPC cache population before extraction (default: true)
+  rpcCacheTimeout?: number;  // Max time to wait for RPC cache (default: 3000ms)
+  forceStableSort?: boolean; // Click column header to force stable sort (default: true for activities)
+}
+
+/**
+ * Force stable sorting by clicking the first sortable column header.
+ * This prevents Odoo's pagination bug where records with identical sort keys
+ * can shift between pages, causing some records to be missed entirely.
+ * 
+ * @param delayMs - Delay after clicking to wait for page to reload
+ * @returns true if sorting was changed, false otherwise
+ */
+async function applyStableSort(delayMs: number): Promise<boolean> {
+  // Look for sortable column headers in list view
+  // Prefer "Summary" or first available column for stable sorting
+  const sortableHeaders = document.querySelectorAll('th.o_column_sortable');
+  
+  if (sortableHeaders.length === 0) {
+    return false;
+  }
+  
+  // Find "Summary" column or use first sortable column
+  let targetHeader: HTMLElement | null = null;
+  for (const header of sortableHeaders) {
+    const text = (header as HTMLElement).textContent?.toLowerCase() || '';
+    if (text.includes('summary') || text.includes('id')) {
+      targetHeader = header as HTMLElement;
+      break;
+    }
+  }
+  
+  // Fallback to first sortable column
+  if (!targetHeader) {
+    targetHeader = sortableHeaders[0] as HTMLElement;
+  }
+  
+  // Check if already sorted by this column (has sort indicator)
+  const isSorted = targetHeader.classList.contains('o_sort_up') || 
+                   targetHeader.classList.contains('o_sort_down') ||
+                   targetHeader.querySelector('.fa-sort-up, .fa-sort-down');
+  
+  if (isSorted) {
+    return false;
+  }
+  
+  targetHeader.click();
+  
+  // Wait for page to reload with new sort order
+  await waitForPageLoad(delayMs);
+  return true;
 }
 
 /**
@@ -12,11 +63,8 @@ async function navigateToFirstPage(delayMs: number): Promise<boolean> {
   
   // Already on first page
   if (!pageInfo || pageInfo.currentStart === 1) {
-    console.log('[Swades Connect] Already on first page');
     return false;
   }
-
-  console.log(`[Swades Connect] Currently on page with records ${pageInfo.currentRange}, navigating to page 1...`);
 
   // Find and click the "previous" button repeatedly until we reach page 1
   let attempts = 0;
@@ -26,14 +74,12 @@ async function navigateToFirstPage(delayMs: number): Promise<boolean> {
     const currentInfo = getCurrentPageInfo();
     
     if (!currentInfo || currentInfo.currentStart === 1) {
-      console.log('[Swades Connect] Reached page 1');
       return true;
     }
 
     // Try to find the "first page" button (faster)
     const firstButton = document.querySelector('.o_pager_first:not(.disabled)') as HTMLButtonElement | null;
     if (firstButton && !firstButton.disabled) {
-      console.log('[Swades Connect] Clicking first page button');
       firstButton.click();
       await waitForPageLoad(delayMs);
       return true;
@@ -69,21 +115,31 @@ export async function extractWithPagination<T>(
   extractorFn: () => T[] | Promise<T[]>,
   config: PaginationConfig = {}
 ): Promise<T[]> {
-  const { maxPages = 50, delayBetweenPages = 1500 } = config;
+  const { 
+    maxPages = 50, 
+    delayBetweenPages = 1500,
+    waitForRpcCache = true,
+    rpcCacheTimeout = 3000,
+    forceStableSort = true
+  } = config;
   const allData: T[] = [];
   let pageCount = 1;
+  
+  // STEP 0: Force stable sorting to prevent pagination instability
+  // This is critical for activities where default sort (date_deadline) is not unique
+  if (forceStableSort) {
+    const sortChanged = await applyStableSort(delayBetweenPages);
+    if (sortChanged) {
+      // Wait extra time for RPC cache to repopulate after sort change
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
   
   // STEP 1: Navigate to first page if not already there
   await navigateToFirstPage(delayBetweenPages);
   
   // Track visited page ranges to detect wrap-around
   const visitedRanges = new Set<string>();
-
-  // Get initial page info
-  const initialPageInfo = getCurrentPageInfo();
-  if (initialPageInfo) {
-    console.log(`[Swades Connect] Starting pagination from page 1: ${initialPageInfo.currentRange} / ${initialPageInfo.total} total records`);
-  }
 
   while (pageCount <= maxPages) {
     // Get current page info BEFORE extraction
@@ -94,33 +150,35 @@ export async function extractWithPagination<T>(
       
       // Check if we've already visited this page range (wrap-around detected)
       if (visitedRanges.has(rangeKey)) {
-        console.log(`[Swades Connect] Detected wrap-around at ${rangeKey}, stopping pagination`);
         break;
       }
       
       // Mark this range as visited
       visitedRanges.add(rangeKey);
-      
-      console.log(`[Swades Connect] Extracting page ${pageCount} (records ${rangeKey})...`);
-    } else {
-      console.log(`[Swades Connect] Extracting page ${pageCount}...`);
+    }
+    
+    // Wait for RPC cache to be populated before extraction (prevents ID lookup misses)
+    if (waitForRpcCache && pageCount > 1) {
+      await waitForRpcCachePopulation(rpcCacheTimeout);
     }
     
     // Extract current page data (supports both sync and async extractors)
     const pageData = await extractorFn();
+    
+    // Add all records - storage layer handles deduplication by ID
+    // Note: Odoo's sort order can shift between page fetches, so the same ID
+    // might appear on different pages. This is NOT a duplicate - it's the same
+    // record that shifted position. Storage merges by ID correctly.
     allData.push(...pageData);
-    console.log(`[Swades Connect] Page ${pageCount}: extracted ${pageData.length} records (total: ${allData.length})`);
 
     // Check if we've extracted all records based on page info
     if (pageInfo && pageInfo.currentEnd >= pageInfo.total) {
-      console.log(`[Swades Connect] Reached last page (${pageInfo.currentEnd} >= ${pageInfo.total})`);
       break;
     }
 
     // Check if there's a next page button
     const nextButton = getNextButton();
     if (!nextButton) {
-      console.log('[Swades Connect] Next button not found or disabled');
       break;
     }
 
@@ -174,6 +232,54 @@ async function waitForPageLoad(baseDelay: number): Promise<void> {
   
   // Additional safety delay to ensure DOM is updated
   await new Promise(resolve => setTimeout(resolve, baseDelay));
+}
+
+/**
+ * Wait for RPC cache to be populated after page navigation
+ * This prevents race conditions where extraction happens before RPC interceptor
+ * can cache real Odoo IDs, which causes duplicate content-hash-based IDs.
+ * 
+ * Strategy: Poll to check if cache size has increased, indicating new IDs were cached
+ */
+async function waitForRpcCachePopulation(timeout: number): Promise<void> {
+  // Get cache size tracking function from global scope (set by content/index.ts)
+  const getCacheSize = (window as any).__swadesCacheSize;
+  
+  if (!getCacheSize) {
+    console.log('[Swades Connect] Cache size tracker not available, skipping wait');
+    return;
+  }
+  
+  const initialSize = getCacheSize();
+  const startTime = Date.now();
+  const pollInterval = 100; // Check every 100ms
+  
+  return new Promise((resolve) => {
+    const checkCache = () => {
+      const currentSize = getCacheSize();
+      const elapsed = Date.now() - startTime;
+      
+      // Cache has grown - new IDs were added
+      if (currentSize > initialSize) {
+        console.log(`[Swades Connect] RPC cache populated in ${elapsed}ms (${initialSize} → ${currentSize})`);
+        resolve();
+        return;
+      }
+      
+      // Timeout reached
+      if (elapsed >= timeout) {
+        console.log(`[Swades Connect] RPC cache wait timeout after ${elapsed}ms (size: ${currentSize})`);
+        resolve();
+        return;
+      }
+      
+      // Continue polling
+      setTimeout(checkCache, pollInterval);
+    };
+    
+    // Start polling after a small delay to allow RPC to start
+    setTimeout(checkCache, pollInterval);
+  });
 }
 
 /**

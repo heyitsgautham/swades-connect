@@ -310,7 +310,7 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
           columns={[
             { key: 'name', label: 'Name', sortable: true, width: '35%' },
             { key: 'stage', label: 'Stage', sortable: true, width: '20%' },
-            { key: 'revenue', label: 'Revenue', sortable: true, width: '20%', format: (v) => `$${v?.toLocaleString() ?? 0}` },
+            { key: 'revenue', label: 'Revenue', sortable: true, width: '20%', format: (v) => `₹${v?.toLocaleString('en-IN') ?? 0}` },
             { key: 'probability', label: 'Prob.', sortable: true, width: '15%', format: (v) => `${v ?? 0}%` },
           ]}
           data={sortedOpportunities}

@@ -30,7 +30,7 @@ export function exportCSV(type: ExportType, data: Contact[] | Opportunity[] | Ac
           email: c.email,
           phone: c.phone,
           company: c.company,
-          salesperson: c.salesperson,
+          country: c.country,
         }))
       );
     case 'opportunities':
@@ -39,7 +39,7 @@ export function exportCSV(type: ExportType, data: Contact[] | Opportunity[] | Ac
           id: o.id,
           name: o.name,
           stage: o.stage,
-          revenue: o.revenue,
+          revenue: `₹${o.revenue.toLocaleString('en-IN')}`,
           probability: o.probability,
           closeDate: o.closeDate,
         }))

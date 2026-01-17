@@ -5,18 +5,22 @@ import { detectViewType, detectDataModel } from './viewDetector';
 import { mountIndicator, setIndicatorState } from '../injected/indicator';
 import { extractWithPagination, getCurrentPageInfo } from './pagination';
 import { startDOMWatcher, stopDOMWatcher, isDOMWatcherActive } from './domWatcher';
-import { 
-  injectRpcInterceptor, 
-  setupRpcSignalListener, 
-  type OdooRpcSignal 
+import {
+  injectRpcInterceptor,
+  setupRpcSignalListener,
+  type OdooRpcSignal
 } from '../injected/rpcInterceptor';
 import type { ExtensionMessage, MessageResponse, DataType } from '../shared/messages';
 import type { Contact, Opportunity, Activity } from '../shared/types';
-import { 
-  populateOpportunityIdCache, 
+import {
+  populateOpportunityIdCache,
   setOpportunityId,
   populateActivityIdCache,
-  setActivityId
+  setActivityId,
+  getActivityIdCacheSize,
+  getOpportunityIdCacheSize,
+  startActivityExtractionSession,
+  getAllActivityRecords
 } from './idCache';
 
 // Pagination configuration
@@ -30,6 +34,12 @@ let rpcSyncEnabled = false;
 let rpcCleanupFn: (() => void) | null = null;
 
 console.log('[Swades Connect] Content script loaded on:', window.location.href);
+
+// Expose cache size function for pagination synchronization
+// This allows pagination.ts to poll for cache updates without circular dependencies
+(window as any).__swadesCacheSize = () => {
+  return getActivityIdCacheSize() + getOpportunityIdCacheSize();
+};
 
 // Inject RPC interceptor IMMEDIATELY (before Odoo loads data)
 // This must happen at document_start to capture web_search_read calls
@@ -83,10 +93,10 @@ chrome.runtime.onMessage.addListener(
       // Return true to indicate we will send response asynchronously
       return true;
     }
-    
+
     if (message.action === 'TOGGLE_AUTO_EXTRACT') {
       const enabled = (message as unknown as { enabled: boolean }).enabled;
-      
+
       if (enabled) {
         startAutoExtract();
         sendResponse({ success: true, data: { enabled: true } });
@@ -94,13 +104,13 @@ chrome.runtime.onMessage.addListener(
         stopAutoExtract();
         sendResponse({ success: true, data: { enabled: false } });
       }
-      
+
       return true;
     }
 
     if (message.action === 'TOGGLE_RPC_SYNC') {
       const enabled = (message as unknown as { enabled: boolean }).enabled;
-      
+
       if (enabled) {
         startRpcSync();
         sendResponse({ success: true, data: { enabled: true } });
@@ -108,7 +118,7 @@ chrome.runtime.onMessage.addListener(
         stopRpcSync();
         sendResponse({ success: true, data: { enabled: false } });
       }
-      
+
       return true;
     }
 
@@ -134,13 +144,13 @@ async function handleExtraction(): Promise<MessageResponse> {
 
   try {
     console.log(`[${extractionId}] Starting extraction with pagination...`);
-    
+
     // Get initial page info for logging
     const pageInfo = getCurrentPageInfo();
     if (pageInfo) {
       console.log(`[${extractionId}] Found ${pageInfo.total} total records to extract`);
     }
-    
+
     // Update indicator to extracting state
     setIndicatorState('extracting', 'Extracting...');
 
@@ -157,7 +167,7 @@ async function handleExtraction(): Promise<MessageResponse> {
     let contacts: Contact[] = [];
     let opportunities: Opportunity[] = [];
     let activities: Activity[] = [];
-    
+
     if (dataModel === 'res.partner') {
       setIndicatorState('extracting', 'Extracting contacts...');
       contacts = await extractWithPagination<Contact>(
@@ -172,10 +182,35 @@ async function handleExtraction(): Promise<MessageResponse> {
       );
     } else if (dataModel === 'mail.activity') {
       setIndicatorState('extracting', 'Extracting activities...');
-      activities = await extractWithPagination<Activity>(
+      // Start a new extraction session to track all unique records seen via RPC
+      startActivityExtractionSession();
+
+      // Navigate through all pages to trigger RPC calls and collect data
+      // We still do pagination to trigger Odoo's RPC calls for each page
+      await extractWithPagination<Activity>(
         extractActivities,
         PAGINATION_CONFIG
       );
+
+      // Get all RPC data accumulated during pagination - this is our authoritative source
+      const allRpcRecords = getAllActivityRecords();
+
+      // Convert ALL RPC records to Activity objects (bypass DOM extraction entirely)
+      // This avoids the Odoo pagination instability where records shift between pages
+      activities = [];
+      for (const [, rpcRecord] of allRpcRecords) {
+        const activity = convertRpcRecordToActivity(rpcRecord);
+        if (activity) {
+          activities.push(activity);
+        }
+      }
+
+      // If RPC count doesn't match Odoo's total, log a warning
+      // This indicates Odoo's pagination lost some records between pages
+      const pageInfo = getCurrentPageInfo();
+      if (pageInfo && allRpcRecords.size < pageInfo.total) {
+        console.warn(`[Swades Connect] Odoo reports ${pageInfo.total} activities but extracted ${allRpcRecords.size}`);
+      }
     }
 
     const totalRecords = contacts.length + opportunities.length + activities.length;
@@ -202,8 +237,7 @@ async function handleExtraction(): Promise<MessageResponse> {
           },
         },
       });
-      console.log(`[${extractionId}] Extraction saved to storage`);
-      
+
       // Update indicator to success state
       setIndicatorState('success', 'Done');
     } catch (error) {
@@ -218,7 +252,7 @@ async function handleExtraction(): Promise<MessageResponse> {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`[${extractionId}] Extraction error:`, errorMessage);
-    
+
     // Update indicator to error state
     setIndicatorState('error', 'Error');
 
@@ -277,7 +311,7 @@ function startAutoExtract(): void {
   }
 
   console.log('[Swades Connect] Starting auto-extract...');
-  
+
   startDOMWatcher(async () => {
     // Prevent overlapping extractions
     if (isExtracting) {
@@ -294,7 +328,7 @@ function startAutoExtract(): void {
 
     console.log('[Swades Connect] DOM change detected (actual data change), auto-extracting...');
     setIndicatorState('extracting', 'Auto-extracting...');
-    
+
     try {
       await handleExtraction();
     } catch (error) {
@@ -314,7 +348,7 @@ function startAutoExtract(): void {
 function stopAutoExtract(): void {
   console.log('[Swades Connect] Stopping auto-extract...');
   stopDOMWatcher();
-  
+
   // Clear badge
   chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', data: { text: '' } });
   setIndicatorState('idle', 'Ready');
@@ -379,15 +413,46 @@ function extractMany2oneName(value: unknown): string {
 }
 
 /**
+ * Parses a complete_name field that may contain "company, person name" format.
+ * In Odoo, when a contact has a parent company, the complete_name is formatted as:
+ * "Company Name, Person Name"
+ */
+function parseCompleteName(completeName: string): { name: string; company: string } {
+  if (!completeName) {
+    return { name: '', company: '' };
+  }
+
+  // Check if the name contains a comma (indicating "company, person" format)
+  const commaIndex = completeName.indexOf(',');
+  
+  if (commaIndex !== -1) {
+    // Format: "Company Name, Person Name"
+    const companyPart = completeName.substring(0, commaIndex).trim();
+    const personPart = completeName.substring(commaIndex + 1).trim();
+    
+    // Only use this parsing if both parts are non-empty
+    if (companyPart && personPart) {
+      return {
+        name: personPart,
+        company: companyPart,
+      };
+    }
+  }
+
+  // No comma or invalid format - return the whole string as name
+  return { name: completeName.trim(), company: '' };
+}
+
+/**
  * Convert an Odoo res.partner record to our Contact format
  * Uses `contact_{id}` format to match the DOM extractor
  */
 function convertToContact(record: Record<string, unknown>): Contact {
   const odooId = sanitizeOdooValue(record.id, '');
-  
-  // Name: prefer 'name', fallback to 'display_name'
-  const name = sanitizeOdooValue(record.name, '') as string || 
-               sanitizeOdooValue(record.display_name, '') as string;
+
+  // Start with explicit name fields
+  let name = sanitizeOdooValue(record.name, '') as string ||
+    sanitizeOdooValue(record.display_name, '') as string;
   
   // Company: can be 'company_name' (string), 'parent_id' (Many2one tuple), or 'parent_name'
   let company = sanitizeOdooValue(record.company_name, '') as string;
@@ -397,17 +462,30 @@ function convertToContact(record: Record<string, unknown>): Contact {
   if (!company) {
     company = sanitizeOdooValue(record.parent_name, '') as string;
   }
-  
-  // Salesperson: user_id is a Many2one field [id, "Name"]
-  const salesperson = extractMany2oneName(record.user_id);
-  
+
+  // If no explicit name, parse complete_name which may be "company, person" format
+  if (!name) {
+    const completeName = sanitizeOdooValue(record.complete_name, '') as string;
+    if (completeName) {
+      const parsed = parseCompleteName(completeName);
+      name = parsed.name;
+      // Use parsed company if we don't have one from explicit fields
+      if (!company && parsed.company) {
+        company = parsed.company;
+      }
+    }
+  }
+
+  // Country: country_id is a Many2one field [id, "Name"] or {id, display_name}
+  const country = extractMany2oneName(record.country_id);
+
   return {
     id: `contact_${odooId}`,
     name,
     email: sanitizeOdooValue(record.email, '') as string,
     phone: sanitizeOdooValue(record.phone, sanitizeOdooValue(record.mobile, '')) as string,
     company,
-    salesperson,
+    country,
   };
 }
 
@@ -421,7 +499,7 @@ function convertToContact(record: Record<string, unknown>): Contact {
  */
 function convertToOpportunity(record: Record<string, unknown>): Opportunity {
   const odooId = sanitizeOdooValue(record.id, '');
-  
+
   // Stage can be:
   // - A tuple [id, name] (from some responses)
   // - An object { id, display_name } (from edit responses)
@@ -443,16 +521,16 @@ function convertToOpportunity(record: Record<string, unknown>): Opportunity {
 
   // Revenue: can be expected_revenue or revenue
   const revenue = sanitizeOdooValue(
-    record.expected_revenue ?? record.revenue, 
+    record.expected_revenue ?? record.revenue,
     0
   ) as number;
-  
+
   // Probability: defaults to 0 for new opportunities
   const probability = sanitizeOdooValue(record.probability, 0) as number;
-  
+
   // Close date: can be date_deadline or closeDate
   const closeDate = sanitizeOdooValue(
-    record.date_deadline ?? record.closeDate, 
+    record.date_deadline ?? record.closeDate,
     ''
   ) as string;
 
@@ -472,10 +550,11 @@ function convertToOpportunity(record: Record<string, unknown>): Opportunity {
  * 
  * For additions (mail.activity.schedule/web_save): uses activity_user_id, activity_type_id
  * For edits (mail.activity/web_save): uses user_id, activity_type_id
+ * For RPC web_search_read: uses user_id, activity_type_id with object format
  */
 function convertToActivity(record: Record<string, unknown>): Activity {
   const odooId = sanitizeOdooValue(record.id, '');
-  
+
   // Activity type can be a tuple [id, name] or { id, display_name }
   let typeName = 'todo';
   const activityType = record.activity_type_id;
@@ -492,7 +571,7 @@ function convertToActivity(record: Record<string, unknown>): Activity {
     else if (typeLabel.includes('email')) typeName = 'email';
   }
 
-  // Assigned user: check activity_user_id (for additions) then user_id (for edits)
+  // Assigned user: check activity_user_id (for additions) then user_id (for edits/RPC)
   // Both can be a tuple [id, name] or { id, display_name }
   let assignedTo = '';
   const activityUserId = record.activity_user_id || record.user_id;
@@ -516,33 +595,36 @@ function convertToActivity(record: Record<string, unknown>): Activity {
 }
 
 /**
+ * Convert an RPC record to Activity format.
+ * This is a wrapper that handles the specific fields from web_search_read responses.
+ * Returns null if conversion fails.
+ */
+function convertRpcRecordToActivity(record: Record<string, unknown>): Activity | null {
+  try {
+    return convertToActivity(record);
+  } catch (error) {
+    console.error('[Swades Connect] Error converting RPC record to activity:', error, record);
+    return null;
+  }
+}
+
+/**
  * Convert Odoo record to extension format based on data type
  */
 function convertRecord(dataType: DataType, record: Record<string, unknown>): Contact | Opportunity | Activity | null {
   try {
-    // Debug: log the ENTIRE raw record to see ALL fields
-    console.log('[Swades Connect] Converting record - FULL raw data:', JSON.stringify(record, null, 2));
-    console.log('[Swades Connect] Record keys:', Object.keys(record));
-    
-    let converted: Contact | Opportunity | Activity | null = null;
     switch (dataType) {
       case 'contacts':
-        converted = convertToContact(record);
-        break;
+        return convertToContact(record);
       case 'opportunities':
-        converted = convertToOpportunity(record);
-        break;
+        return convertToOpportunity(record);
       case 'activities':
-        converted = convertToActivity(record);
-        break;
+        return convertToActivity(record);
       default:
         return null;
     }
-    
-    console.log('[Swades Connect] Converted result:', converted);
-    return converted;
   } catch (error) {
-    console.error('[Swades Connect] Error converting record:', error, record);
+    console.error('[Swades Connect] Error converting record:', error);
     return null;
   }
 }
@@ -569,19 +651,60 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
     switch (method) {
       case 'web_search_read': {
         // web_search_read is used when Odoo loads list views
-        // We use it to capture real Odoo IDs for opportunities and activities
+        // We use it to capture real Odoo IDs and auto-populate storage
         // Response format: { length: N, records: [...], __domain: [...] }
         if (typeof result === 'object' && result !== null) {
           const resultObj = result as Record<string, unknown>;
           const records = resultObj.records as Array<Record<string, unknown>> | undefined;
-          
+
           if (Array.isArray(records) && records.length > 0) {
-            if (model === 'crm.lead') {
-              console.log(`[Swades Connect] web_search_read: Caching ${records.length} opportunity IDs`);
+            if (model === 'res.partner') {
+              // Auto-populate contacts from web_search_read
+              const contacts: Contact[] = [];
+              for (const rec of records) {
+                const converted = convertRecord('contacts', rec);
+                if (converted) contacts.push(converted as Contact);
+              }
+              if (contacts.length > 0) {
+                chrome.runtime.sendMessage({
+                  action: 'ODOO_RPC_UPSERT',
+                  data: { type: 'contacts', records: contacts },
+                }).catch((error) => {
+                  console.error('[Swades Connect] Failed to upsert contacts from web_search_read:', error);
+                });
+              }
+            } else if (model === 'crm.lead') {
               populateOpportunityIdCache(records);
+              // Auto-populate opportunities from web_search_read
+              const opportunities: Opportunity[] = [];
+              for (const rec of records) {
+                const converted = convertRecord('opportunities', rec);
+                if (converted) opportunities.push(converted as Opportunity);
+              }
+              if (opportunities.length > 0) {
+                chrome.runtime.sendMessage({
+                  action: 'ODOO_RPC_UPSERT',
+                  data: { type: 'opportunities', records: opportunities },
+                }).catch((error) => {
+                  console.error('[Swades Connect] Failed to upsert opportunities from web_search_read:', error);
+                });
+              }
             } else if (model === 'mail.activity') {
-              console.log(`[Swades Connect] web_search_read: Caching ${records.length} activity IDs`);
               populateActivityIdCache(records);
+              // Auto-populate activities from web_search_read
+              const activities: Activity[] = [];
+              for (const rec of records) {
+                const converted = convertRecord('activities', rec);
+                if (converted) activities.push(converted as Activity);
+              }
+              if (activities.length > 0) {
+                chrome.runtime.sendMessage({
+                  action: 'ODOO_RPC_UPSERT',
+                  data: { type: 'activities', records: activities },
+                }).catch((error) => {
+                  console.error('[Swades Connect] Failed to upsert activities from web_search_read:', error);
+                });
+              }
             }
           }
         }
@@ -596,7 +719,7 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
         if (model === 'crm.lead' && typeof result === 'object' && result !== null) {
           const resultObj = result as Record<string, unknown>;
           const groups = resultObj.groups as Array<Record<string, unknown>> | undefined;
-          
+
           if (Array.isArray(groups)) {
             // Collect all records from all groups
             const allRecords: Array<Record<string, unknown>> = [];
@@ -606,10 +729,23 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
                 allRecords.push(...records);
               }
             }
-            
+
             if (allRecords.length > 0) {
-              console.log(`[Swades Connect] web_read_group: Caching ${allRecords.length} opportunity IDs from ${groups.length} groups`);
               populateOpportunityIdCache(allRecords);
+              // Auto-populate opportunities from web_read_group (kanban view)
+              const opportunities: Opportunity[] = [];
+              for (const rec of allRecords) {
+                const converted = convertRecord('opportunities', rec);
+                if (converted) opportunities.push(converted as Opportunity);
+              }
+              if (opportunities.length > 0) {
+                chrome.runtime.sendMessage({
+                  action: 'ODOO_RPC_UPSERT',
+                  data: { type: 'opportunities', records: opportunities },
+                }).catch((error) => {
+                  console.error('[Swades Connect] Failed to upsert opportunities from web_read_group:', error);
+                });
+              }
             }
           }
         }
@@ -627,7 +763,7 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
         const prefix = dataType === 'contacts' ? 'contact_' : dataType === 'opportunities' ? 'opp_' : 'act_';
         const ids = (args[0] as number[]).map(id => `${prefix}${id}`);
         console.log(`[Swades Connect] RPC DELETE (${method}): ${dataType}`, ids);
-        
+
         chrome.runtime.sendMessage({
           action: 'ODOO_RPC_DELETE',
           data: { type: dataType, ids },
@@ -653,18 +789,18 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
         if (Array.isArray(result) && result.length >= 2) {
           const [id, displayName] = result as [number, string];
           const nameArg = typeof args[0] === 'string' ? args[0] : displayName;
-          
+
           const contact: Contact = {
             id: `contact_${id}`,
             name: nameArg,
             email: '',  // name_create doesn't set email
             phone: '',  // name_create doesn't set phone
             company: '',
-            salesperson: '',
+            country: '',
           };
-          
+
           console.log(`[Swades Connect] RPC name_create: Created contact`, contact);
-          
+
           chrome.runtime.sendMessage({
             action: 'ODOO_RPC_UPSERT',
             data: { type: 'contacts', records: [contact] },
@@ -689,29 +825,35 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
         //     Response: [{ id: xxx }] (only ID returned)
         //   - Edit: args[0] = [id] (array with ID), args[1] = { changed fields }
         //     Response: [{ full record with all fields }]
-        
+
+        // CRITICAL: Skip mail.activity.schedule (activity creation wizard)
+        // The wizard returns its OWN ID (e.g., 18), NOT the actual mail.activity ID (e.g., 376)
+        // This causes duplicates: create stores act_18, edit comes with act_376
+        // Solution: Skip wizard, let the web_search_read that follows capture the real ID
+        if (model === 'mail.activity.schedule') {
+          console.log('[Swades Connect] Skipping mail.activity.schedule wizard - real ID will come from web_search_read');
+          setIndicatorState('success', 'Activity Created');
+          return;
+        }
+
         const records: (Contact | Opportunity | Activity)[] = [];
         const idsArray = args[0] as unknown[];
         const isAddition = Array.isArray(idsArray) && idsArray.length === 0;
-        
+
         // Check if result contains full record data or just ID
         const firstResult = Array.isArray(result) && result[0] ? result[0] : result;
-        const resultKeys = typeof firstResult === 'object' && firstResult !== null 
-          ? Object.keys(firstResult as object) 
+        const resultKeys = typeof firstResult === 'object' && firstResult !== null
+          ? Object.keys(firstResult as object)
           : [];
         const hasOnlyId = resultKeys.length === 1 && resultKeys[0] === 'id';
-        
-        console.log(`[Swades Connect] web_save analysis: isAddition=${isAddition}, hasOnlyId=${hasOnlyId}, resultKeys=${resultKeys.join(',')}`);
-        
+
         if (hasOnlyId && args.length >= 2) {
           // Result only has ID - merge with args[1] (the field data)
           // This happens for:
           //   1. Additions: args[0]=[], args[1]={all fields}, result=[{id: x}]
           //   2. Some edits: args[0]=[id], args[1]={changed fields}, result=[{id: x}]
-          console.log('[Swades Connect] web_save returned ID only, using args for field data');
-          
           const fieldData = args[1] as Record<string, unknown>;
-          
+
           if (Array.isArray(result)) {
             for (const res of result) {
               if (typeof res === 'object' && res !== null && 'id' in (res as object)) {
@@ -721,18 +863,17 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
                   id,
                   ...fieldData,
                 };
-                console.log('[Swades Connect] Constructed record from args:', recordData);
-                
+
                 // Cache opportunity name→id for future DOM extractions
                 if (dataType === 'opportunities' && typeof fieldData.name === 'string') {
                   setOpportunityId(fieldData.name, id);
                 }
-                
+
                 // Cache activity summary→id for future DOM extractions
                 if (dataType === 'activities' && typeof fieldData.summary === 'string') {
                   setActivityId(fieldData.summary, id);
                 }
-                
+
                 const converted = convertRecord(dataType, recordData);
                 if (converted) records.push(converted);
               }
@@ -743,17 +884,17 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
           for (const rec of result) {
             if (typeof rec === 'object' && rec !== null) {
               const recObj = rec as Record<string, unknown>;
-              
+
               // Cache opportunity name→id for future DOM extractions
               if (dataType === 'opportunities' && typeof recObj.id === 'number' && typeof recObj.name === 'string') {
                 setOpportunityId(recObj.name, recObj.id);
               }
-              
+
               // Cache activity summary→id for future DOM extractions
               if (dataType === 'activities' && typeof recObj.id === 'number' && typeof recObj.summary === 'string') {
                 setActivityId(recObj.summary, recObj.id);
               }
-              
+
               const converted = convertRecord(dataType, recObj);
               if (converted) records.push(converted);
             }
@@ -761,30 +902,28 @@ function handleRpcSignal(signal: OdooRpcSignal): void {
         } else if (typeof result === 'object' && result !== null) {
           // Result is a single full record
           const resObj = result as Record<string, unknown>;
-          
+
           // Cache opportunity name→id for future DOM extractions
           if (dataType === 'opportunities' && typeof resObj.id === 'number' && typeof resObj.name === 'string') {
             setOpportunityId(resObj.name, resObj.id);
           }
-          
+
           // Cache activity summary→id for future DOM extractions
           if (dataType === 'activities' && typeof resObj.id === 'number' && typeof resObj.summary === 'string') {
             setActivityId(resObj.summary, resObj.id);
           }
-          
+
           const converted = convertRecord(dataType, resObj);
           if (converted) records.push(converted);
         } else if (typeof result === 'number') {
           // create sometimes returns just the ID
-          console.log(`[Swades Connect] RPC ${method} returned ID only: ${result}`);
           setIndicatorState('idle', 'Ready');
           return;
         }
 
         if (records.length > 0) {
-          const action = isAddition ? 'CREATE' : 'UPSERT';
-          console.log(`[Swades Connect] RPC ${action}: ${dataType}`, records);
-          
+          console.log(`[Swades Connect] RPC ${isAddition ? 'CREATE' : 'UPSERT'}: ${records.length} ${dataType}`);
+
           chrome.runtime.sendMessage({
             action: 'ODOO_RPC_UPSERT',
             data: { type: dataType, records },
@@ -830,14 +969,14 @@ function startRpcSync(): void {
   }
 
   console.log('[Swades Connect] Starting RPC sync...');
-  
+
   // Setup the RPC signal listener
   rpcCleanupFn = setupRpcSignalListener(handleRpcSignal);
   rpcSyncEnabled = true;
-  
+
   // Persist setting
   chrome.storage.local.set({ rpc_sync_enabled: true });
-  
+
   // Update badge and indicator
   chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', data: { text: 'RPC' } });
   setIndicatorState('idle', 'RPC sync ON');
@@ -853,17 +992,17 @@ function stopRpcSync(): void {
   }
 
   console.log('[Swades Connect] Stopping RPC sync...');
-  
+
   // Cleanup listener
   if (rpcCleanupFn) {
     rpcCleanupFn();
     rpcCleanupFn = null;
   }
   rpcSyncEnabled = false;
-  
+
   // Persist setting
   chrome.storage.local.set({ rpc_sync_enabled: false });
-  
+
   // Clear badge and update indicator
   chrome.runtime.sendMessage({ action: 'UPDATE_BADGE', data: { text: '' } });
   setIndicatorState('idle', 'Ready');

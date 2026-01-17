@@ -20,13 +20,16 @@ function generateContentHash(prefix: string, ...parts: (string | number)[]): str
 
 /**
  * Generate an activity ID, preferring real Odoo ID from cache over content hash
- * @param summary - The activity summary to look up
+ * @param rowIndex - The 0-based row index for cache lookup
  * @param fallbackParts - Parts to use for content hash if not found in cache
  * @returns Activity ID in format `act_{id}` or `act_{hash}`
  */
-function generateActivityId(summary: string, ...fallbackParts: (string | number)[]): string {
-  // Try to get real Odoo ID from cache
-  const realId = lookupActivityId(summary);
+function generateActivityId(
+  rowIndex: number,
+  ...fallbackParts: (string | number)[]
+): string {
+  // Try to get real Odoo ID from cache using row index
+  const realId = lookupActivityId(rowIndex);
   if (realId !== null) {
     return `act_${realId}`;
   }
@@ -101,9 +104,7 @@ export async function extractActivities(): Promise<Activity[]> {
  */
 function extractActivityFromRow(row: HTMLElement, index: number): Activity | null {
   try {
-    // We'll generate a content-based ID after extracting the data
-    // because Odoo's data-id (e.g., "datapoint_23") changes between page loads
-    void index; // Index kept for function signature compatibility
+    // Index is used for row-based ID lookup from RPC cache
 
     // Extract summary from td[name="summary"]
     const summaryCell = row.querySelector('td[name="summary"]');
@@ -140,8 +141,8 @@ function extractActivityFromRow(row: HTMLElement, index: number): Activity | nul
                    row.querySelector('.o_activity_done') !== null;
     const status: Activity['status'] = isDone ? 'done' : 'open';
 
-    // Generate activity ID - prefer real Odoo ID from cache, fall back to content hash
-    const id = generateActivityId(summary, summary, type, dueDate, assignedTo);
+    // Generate activity ID - prefer real Odoo ID from cache (using row index), fall back to content hash
+    const id = generateActivityId(index, summary, type, dueDate, assignedTo);
 
     return {
       id,
@@ -170,9 +171,7 @@ function extractActivityFromRow(row: HTMLElement, index: number): Activity | nul
  */
 function extractActivityFromKanbanCard(card: HTMLElement, index: number): Activity | null {
   try {
-    // We'll generate a content-based ID after extracting the data
-    // because Odoo's data-id (e.g., "datapoint_XX") changes between page loads
-    void index; // Index kept for function signature compatibility
+    // Index is used for row-based ID lookup from RPC cache
 
     // Extract summary - typically the second span.text-truncate
     // In the kanban, the first truncate has the linked record, second has summary
@@ -243,8 +242,8 @@ function extractActivityFromKanbanCard(card: HTMLElement, index: number): Activi
                    card.querySelector('.o_activity_done') !== null;
     const status: Activity['status'] = isDone ? 'done' : 'open';
 
-    // Generate activity ID - prefer real Odoo ID from cache, fall back to content hash
-    const id = generateActivityId(summary, summary, type, dueDate, assignedTo);
+    // Generate activity ID - prefer real Odoo ID from cache (using row index), fall back to content hash
+    const id = generateActivityId(index, summary, type, dueDate, assignedTo);
 
     return {
       id,

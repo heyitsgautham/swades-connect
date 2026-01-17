@@ -30,7 +30,7 @@ Extracts contact/partner records from Odoo's Contacts module.
 | `email` | `td[name="email"]` | Uses `data-tooltip` for clean value |
 | `phone` | `td[name="phone"]` | Uses `data-tooltip` for clean value |
 | `company` | `td[name="parent_id"]` or parsed from name | Falls back to parsed company from complete_name |
-| `salesperson` | `td[name="user_id"]` | Optional field |
+| `country` | `td[name="country_id"]` | Country field |
 
 ---
 

@@ -5,7 +5,7 @@ export interface Contact {
   email: string;
   phone: string;
   company: string;
-  salesperson: string;
+  country: string;
 }
 
 // Opportunity interface

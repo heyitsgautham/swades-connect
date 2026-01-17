@@ -110,13 +110,9 @@ function extractContactFromRow(row: HTMLElement, index: number): Contact | null 
     // Use explicit company field if available, otherwise use parsed company from complete_name
     const company = explicitCompany || parsedName.company;
 
-    // Extract country as fallback info (stored in salesperson for now)
+    // Extract country
     const countryCell = row.querySelector('td[name="country_id"]');
     const country = getTooltipOrText(countryCell);
-
-    // Try to extract salesperson if available
-    const salespersonCell = row.querySelector('td[name="user_id"]');
-    const salesperson = getTooltipOrText(salespersonCell) || country;
 
     return {
       id,
@@ -124,7 +120,7 @@ function extractContactFromRow(row: HTMLElement, index: number): Contact | null 
       email: email || '',
       phone: phone || '',
       company: company || '',
-      salesperson: salesperson || '',
+      country: country || '',
     };
   } catch (error) {
     console.warn('Error extracting contact from row:', error);
@@ -174,16 +170,13 @@ function extractContactFromKanbanCard(card: HTMLElement, index: number): Contact
     const explicitCompany = extractCompanyFromKanban(card);
     const company = explicitCompany || parsedName.company;
 
-    // Extract salesperson if available
-    const salesperson = extractSalespersonFromKanban(card);
-
     return {
       id,
       name: parsedName.name,
       email: email || '',
       phone: phone || '',
-      company: company || contactLocation, // Use location as company fallback if no explicit company
-      salesperson: salesperson || '',
+      company: company || '', 
+      country: contactLocation || '',
     };
   } catch (error) {
     console.warn('Error extracting contact from kanban card:', error);
@@ -284,18 +277,6 @@ function extractCompanyFromKanban(card: HTMLElement): string {
       card.querySelector('.o_kanban_record_subtitle');
 
     return companyElement?.textContent?.trim() || '';
-  } catch {
-    return '';
-  }
-}
-
-/**
- * Extracts salesperson from a kanban card.
- */
-function extractSalespersonFromKanban(card: HTMLElement): string {
-  try {
-    const salespersonElement = card.querySelector('[data-field="user_id"]');
-    return salespersonElement?.textContent?.trim() || '';
   } catch {
     return '';
   }
