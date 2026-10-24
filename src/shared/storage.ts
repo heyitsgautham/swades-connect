@@ -145,16 +145,7 @@ export async function upsertRecords(
       const existingRecord = existingMap.get(record.id);
       
       if (existingRecord) {
-        // Update: Merge existing record with new fields (new fields take precedence)
-        // Only update non-empty fields from the new record
-        const mergedRecord = { ...existingRecord };
-        for (const [key, value] of Object.entries(record)) {
-          // Only overwrite if the new value is not empty
-          if (value !== '' && value !== null && value !== undefined) {
-            (mergedRecord as Record<string, unknown>)[key] = value;
-          }
-        }
-        existingMap.set(record.id, mergedRecord);
+        existingMap.set(record.id, mergeNonEmpty(existingRecord, record));
         updated++;
       } else {
         // Add: New record
@@ -174,6 +165,88 @@ export async function upsertRecords(
     };
 
     await chrome.storage.local.set({ [STORAGE_KEY]: updatedData });
+
+    return { added, updated };
+  } finally {
+    await releaseLock(lockId);
+  }
+}
+
+/**
+ * Merge an incoming record into a stored one. Incoming fields win,
+ * except empty strings, null and undefined, which keep the stored value.
+ */
+export function mergeNonEmpty<T extends object>(existing: T, incoming: T): T {
+  const merged = { ...existing } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value !== '' && value !== null && value !== undefined) {
+      merged[key] = value;
+    }
+  }
+  return merged as T;
+}
+
+/** Ids built from a real Odoo record id, as opposed to a content hash. */
+const REAL_ID_PATTERN: Record<'opportunities' | 'activities', RegExp> = {
+  opportunities: /^opp_\d+$/,
+  activities: /^act_\d+$/,
+};
+
+const MATCH_FIELD = { opportunities: 'name', activities: 'summary' } as const;
+
+/**
+ * Upsert records whose ids can upgrade from a content hash to a real Odoo id.
+ *
+ * DOM extraction stores records under hash ids such as `opp_lnl5ct` when the
+ * real id is unknown. When RPC sync later delivers `opp_24` for the same record,
+ * no stored id matches, so the stored record with the same name (opportunities)
+ * or summary (activities), compared case-insensitively, is merged and takes the
+ * real id instead of a duplicate being added.
+ */
+export async function upsertUpgradingHashIds(
+  type: 'opportunities' | 'activities',
+  records: RecordData[]
+): Promise<UpsertResult> {
+  if (records.length === 0) {
+    return { added: 0, updated: 0 };
+  }
+
+  const lockId = `upsert_${type}_match_${Date.now()}`;
+  const acquired = await waitForLock(lockId, 5000);
+
+  if (!acquired) {
+    throw new StorageError(`Failed to acquire lock for upsert operation on ${type}`, { type, lockId });
+  }
+
+  try {
+    const existing = await getData();
+    const stored = [...(existing[type] as RecordData[])];
+    const field = MATCH_FIELD[type];
+    const normalize = (record: RecordData) =>
+      String((record as unknown as Record<string, unknown>)[field] ?? '').toLowerCase().trim();
+
+    let added = 0;
+    let updated = 0;
+
+    for (const record of records) {
+      let index = stored.findIndex((item) => item.id === record.id);
+
+      if (index === -1 && REAL_ID_PATTERN[type].test(record.id) && normalize(record)) {
+        index = stored.findIndex((item) => normalize(item) === normalize(record));
+      }
+
+      if (index >= 0) {
+        stored[index] = mergeNonEmpty(stored[index], record);
+        updated++;
+      } else {
+        stored.push(record);
+        added++;
+      }
+    }
+
+    await chrome.storage.local.set({
+      [STORAGE_KEY]: { ...existing, [type]: stored, lastSync: Date.now() },
+    });
 
     return { added, updated };
   } finally {

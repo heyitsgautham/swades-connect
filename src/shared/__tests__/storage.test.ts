@@ -7,10 +7,12 @@ import {
   deleteRecordsById,
   getData,
   initializeStorage,
+  mergeNonEmpty,
   saveData,
   upsertRecords,
+  upsertUpgradingHashIds,
 } from '../storage';
-import { acquireLock } from '../lock';
+import { acquireLock, releaseLock } from '../lock';
 import { StorageError } from '../errors';
 import type { StorageSchema } from '../types';
 import { chromeMock } from '../../test/chromeMock';
@@ -180,5 +182,72 @@ describe('storage against chrome.storage.local', () => {
     it('returns 0 for an empty id list', async () => {
       expect(await deleteRecordsById('opportunities', [])).toBe(0);
     });
+  });
+});
+
+describe('mergeNonEmpty', () => {
+  it('lets incoming values win except empty ones', () => {
+    expect(mergeNonEmpty(makeContact({ email: 'keep@example.com', phone: '1' }), makeContact({ email: '', phone: '2' }))).toMatchObject({
+      email: 'keep@example.com',
+      phone: '2',
+    });
+  });
+
+  it('keeps an incoming zero', () => {
+    expect(mergeNonEmpty(makeOpportunity({ revenue: 500 }), makeOpportunity({ revenue: 0 })).revenue).toBe(0);
+  });
+});
+
+describe('upsertUpgradingHashIds', () => {
+  const stored = () => chromeMock().storage.local.dump().odoo_data as StorageSchema['odoo_data'];
+
+  it('upgrades a hash-id opportunity to the real id when the name matches', async () => {
+    await saveData([], [makeOpportunity({ id: 'opp_lnl5ct', name: 'Widget Bulk Order', revenue: 100 })], []);
+
+    const result = await upsertUpgradingHashIds('opportunities', [
+      makeOpportunity({ id: 'opp_24', name: '  widget bulk order ', revenue: 900, closeDate: '' }),
+    ]);
+
+    expect(result).toEqual({ added: 0, updated: 1 });
+    expect(stored().opportunities).toEqual([
+      expect.objectContaining({ id: 'opp_24', revenue: 900, closeDate: '2026-03-31' }),
+    ]);
+  });
+
+  it('upgrades a hash-id activity by summary', async () => {
+    await saveData([], [], [makeActivity({ id: 'act_k2j9', summary: 'Follow up on quote' })]);
+    await upsertUpgradingHashIds('activities', [makeActivity({ id: 'act_10', summary: 'Follow up on quote', status: 'done' })]);
+    expect(stored().activities).toEqual([expect.objectContaining({ id: 'act_10', status: 'done' })]);
+  });
+
+  it('matches by id first', async () => {
+    await saveData([], [makeOpportunity({ id: 'opp_24', name: 'Old name' }), makeOpportunity({ id: 'opp_hash', name: 'New name' })], []);
+    await upsertUpgradingHashIds('opportunities', [makeOpportunity({ id: 'opp_24', name: 'New name' })]);
+    expect(stored().opportunities.map((o) => [o.id, o.name])).toEqual([
+      ['opp_24', 'New name'],
+      ['opp_hash', 'New name'],
+    ]);
+  });
+
+  it('does not name-match an incoming hash id', async () => {
+    await saveData([], [makeOpportunity({ id: 'opp_aaa', name: 'Same' })], []);
+    const result = await upsertUpgradingHashIds('opportunities', [makeOpportunity({ id: 'opp_bbb', name: 'Same' })]);
+    expect(result).toEqual({ added: 1, updated: 0 });
+    expect(stored().opportunities).toHaveLength(2);
+  });
+
+  it('adds records with no match', async () => {
+    const result = await upsertUpgradingHashIds('activities', [makeActivity({ id: 'act_1' }), makeActivity({ id: 'act_2', summary: 'Other' })]);
+    expect(result).toEqual({ added: 2, updated: 0 });
+  });
+
+  it('waits for the lock instead of failing at once', async () => {
+    vi.useFakeTimers();
+    await acquireLock('holder');
+    const pending = upsertUpgradingHashIds('activities', [makeActivity()]);
+    await vi.advanceTimersByTimeAsync(300);
+    await releaseLock('holder');
+    await vi.advanceTimersByTimeAsync(200);
+    expect(await pending).toEqual({ added: 1, updated: 0 });
   });
 });
