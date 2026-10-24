@@ -72,6 +72,25 @@ describe('extractOpportunities from the kanban view', () => {
     ]);
   });
 
+  it('turns filled priority stars into a probability', async () => {
+    render(
+      leadKanbanColumns([
+        {
+          stage: 'New',
+          cards: [
+            { name: 'Zero', stars: 0 },
+            { name: 'One', stars: 1 },
+            { name: 'Two', stars: 2 },
+            { name: 'Three', stars: 3 },
+          ],
+        },
+      ]),
+    );
+
+    const result = await extractOpportunities();
+    expect(result.map((o) => o.probability)).toEqual([0, 33, 67, 100]);
+  });
+
   it('returns nothing on a page with neither view', async () => {
     render('<div class="o_form_view"></div>');
     expect(await extractOpportunities()).toEqual([]);

@@ -120,7 +120,8 @@ function extractOpportunityFromKanbanCard(
     const filledStars = Array.from(allStars).filter(star =>
       star.classList.contains('fa-star') && !star.classList.contains('fa-star-o')
     );
-    const priority = filledStars.length * 33; // Convert to percentage (0, 33, 66, 100)
+    // Convert to a percentage of the stars shown (0, 33, 67, 100 for Odoo's three stars)
+    const priority = allStars.length > 0 ? Math.round((filledStars.length / allStars.length) * 100) : 0;
 
     // Stage comes from the column header
     const stage = stageName || 'Unknown';
