@@ -1,4 +1,3 @@
-
 <div align="center">
 
   <img src="public/wallpaper.png" alt="Swades Connect Banner" width="100%" />
@@ -10,474 +9,340 @@
 
 </div>
 
-A Chrome Extension (Manifest V3) that extracts **Contacts**, **Opportunities**, and **Activities** from Odoo CRM, stores them locally using `chrome.storage.local`, and provides a React-powered popup dashboard for viewing and exporting your data.
+A Chrome extension (Manifest V3) that extracts contacts, opportunities and activities from Odoo CRM.
+It stores them in `chrome.storage.local` and shows them in a React popup where you can search, delete and export them.
 
-![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-green?logo=googlechrome)
+[![CI](https://github.com/heyitsgautham/swades-connect/actions/workflows/ci.yml/badge.svg)](https://github.com/heyitsgautham/swades-connect/actions/workflows/ci.yml)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
-![React](https://img.shields.io/badge/React-18-61dafb?logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript)
+![React](https://img.shields.io/badge/React-19-61dafb?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript)
 
----
+## Demo video
 
-## 🎥 Demo Video
+[Watch the demo video](https://youtu.be/Byhxi2gPe-w).
+It shows extraction from a live Odoo CRM, data surviving a page refresh, the popup dashboard, and delete and export.
 
-> **[Watch the Demo Video](https://youtu.be/Byhxi2gPe-w)** - 3-5 minute demonstration showing:
-> - Extraction from live Odoo CRM
-> - Data persistence after page refresh
-> - Popup dashboard functionality
-> - Delete and export features
+## Features
 
----
+| Area | What it does |
+|---|---|
+| Extraction | Reads contacts, opportunities and activities from Odoo list and kanban views, across every pager page |
+| RPC sync | Optionally watches Odoo's own `call_kw` traffic and applies creates, edits and deletes as they happen |
+| Storage | Keeps records in `chrome.storage.local`, merged by id, with a lock so two tabs cannot overwrite each other |
+| Popup | Tabs per record type with search, filters, per-record delete, delete all, and CSV or JSON export |
+| Page indicator | A Shadow DOM status pill on the Odoo page shows idle, extracting, success and error states without touching Odoo's CSS |
 
-## ✨ Features
+## Requirements
 
-### Data Extraction
-- **Contacts** - Extract contact information including name, email, phone, company, and country
-- **Opportunities** - Capture sales pipeline data with expected revenue, probability, and stage information
-- **Activities** - Track scheduled activities, deadlines, and activity types
+| Tool | Version |
+|---|---|
+| Node.js | 20 or newer (CI uses 22) |
+| pnpm | 10.26.2, pinned in `package.json` as `packageManager`; `corepack enable` installs it |
+| Chrome | Any current version, with developer mode on for unpacked extensions |
 
-### Smart Detection
-- **View Detection** - Automatically detects Odoo list and kanban views
-- **RPC Interception** - Captures Odoo's internal API calls for accurate data extraction
-- **Pagination Support** - Handles multi-page data extraction seamlessly
+No environment variables are read anywhere in the code, so there is no `.env` file.
 
-### Data Management
-- **Local Storage** - All data stored securely in `chrome.storage.local`
-- **Deduplication** - Prevents duplicate entries based on unique IDs
-- **Export Options** - Export data to CSV or JSON formats
-- **Search & Filter** - Filter and search through extracted data
+## Install and build
 
-### Visual Feedback
-- **Shadow DOM Indicators** - Non-intrusive status indicators isolated from Odoo's CSS
-- **Extraction States** - Visual feedback for idle, extracting, success, and error states
+```bash
+git clone https://github.com/heyitsgautham/swades-connect.git
+cd swades-connect
+corepack enable
+pnpm install --frozen-lockfile
+pnpm run build
+```
 
-“Given the 5-hour time constraint, concurrency locks, bulk operation batching, and retry queues are intentionally not fully implemented.”
+Then load it in Chrome.
 
----
+1. Open `chrome://extensions/`.
+2. Turn on Developer mode.
+3. Click Load unpacked and pick the `dist/` folder.
 
-## 🚀 Installation
+`pnpm run dev` runs Vite with the CRXJS plugin, which rebuilds `dist/` and reloads the extension as you edit.
 
-### Prerequisites
-- **Node.js** 18+ 
-- **pnpm** (recommended) or npm
-- **Google Chrome** browser
+## Verify the setup
 
-### Setup Steps
+From a fresh clone, these commands must all exit with code 0.
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/heyitsgautham/swades-connect.git
-   cd swades-connect
-   ```
+```bash
+pnpm install --frozen-lockfile
+pnpm run check
+```
 
-2. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
+`pnpm run check` runs lint, typecheck, the test suite with coverage, and the production build, in the same order as CI.
 
-3. **Build the extension**
-   ```bash
-   # Development build with hot reload
-   pnpm run dev
+## Commands
 
-   # OR Production build
-   pnpm run build
-   ```
+| Command | What it runs |
+|---|---|
+| `pnpm run dev` | Vite dev build with extension hot reload |
+| `pnpm run build` | `tsc -b` then the production build into `dist/` |
+| `pnpm run lint` | ESLint over the repo |
+| `pnpm run typecheck` | `tsc -b` with no emit |
+| `pnpm test` | Vitest in watch mode |
+| `pnpm run test:run` | The test suite once |
+| `pnpm run test:coverage` | The test suite once with V8 coverage; fails below the thresholds in `vitest.config.ts` |
+| `pnpm run check` | lint, typecheck, test:coverage and build in sequence |
 
-4. **Load the extension in Chrome**
-   1. Open Chrome and navigate to `chrome://extensions/`
-   2. Enable **Developer mode** (toggle in top-right corner)
-   3. Click **Load unpacked**
-   4. Select the `dist/` folder from this project
-   5. The Swades Connect icon should appear in your extensions toolbar
+## Testing
 
----
+Tests use Vitest under jsdom and live next to the code in `__tests__/` folders.
 
-## 📋 Commands
+| Piece | Where | Purpose |
+|---|---|---|
+| Chrome mock | `src/test/chromeMock.ts` | In-memory `chrome.storage.local` and `session` that clone values like the real API, plus `runtime`, `tabs` and `action` spies; `src/test/setup.ts` installs a fresh one before every test |
+| Record fixtures | `src/test/fixtures.ts` | Synthetic contacts, opportunities and activities on `example.com` addresses |
+| Odoo markup builders | `src/test/odooDom.ts` | Small list and kanban fragments with only the selectors the extractors read |
 
-| Command | Description |
-|---------|-------------|
-| `pnpm run dev` | Development build with watch mode (hot reload) |
-| `pnpm run build` | Production build to `dist/` folder |
-| `pnpm run lint` | Run ESLint + TypeScript type checking |
-| `pnpm run preview` | Preview the built extension |
+All test data is invented.
+The saved pages under `odoo-html/` are for manual testing in the browser and no test reads them.
 
----
+Coverage covers `src/shared`, `src/content`, `src/background` and `src/injected`.
+CI fails if it drops below 75% of statements, functions and lines or 70% of branches.
+The React popup is checked by lint, typecheck and build, not by unit tests.
 
-## 📖 Usage
+## Docker
 
-### Extracting Data from Odoo
+The extension runs inside Chrome, so the container is a reproducible build and test environment, not a server.
 
-1. **Navigate to Odoo CRM**
-   - Go to your Odoo instance (e.g., `https://your-company.odoo.com`)
-   - Log in to your account
+```bash
+docker compose run --rm check     # lint, typecheck, test:coverage and build
+docker compose run --rm build     # writes the unpacked extension to ./dist
+docker build --target extension -o out .   # same result without compose
+```
 
-2. **Open the relevant view**
-   - **Contacts**: Navigate to Contacts menu
-   - **Opportunities**: Navigate to CRM → Pipeline or Opportunities
-   - **Activities**: Navigate to any view showing activities
+CI builds both Docker targets on every push.
 
-3. **Extract Data**
-   - Click the Swades Connect extension icon in Chrome toolbar
-   - Click the **Extract** button for the data type you want
-   - Wait for the extraction to complete (status indicator will show progress)
+## Configuration
 
-4. **View & Export**
-   - Switch between tabs (Contacts, Opportunities, Activities) to view extracted data
-   - Use search and filters to find specific records
-   - Click **Export CSV** or **Export JSON** to download your data
+The extension keeps its settings in `chrome.storage.local`.
 
-### Supported Odoo Views
-- ✅ List View (table format)
-- ✅ Kanban View (card format)
+| Key | Set by | Effect |
+|---|---|---|
+| `auto_extract_enabled` | Popup settings | Re-extracts when data rows change on the page |
+| `rpc_sync_enabled` | Popup settings | Applies Odoo RPC creates, edits and deletes as they happen |
+| `log_level` | You, from the service worker console | `debug`, `info` (default), `warn` or `error` |
 
----
+To see the per-message traces, run this in the service worker console.
 
-## 🏗️ Project Structure
+```js
+chrome.storage.local.set({ log_level: 'debug' })
+```
+
+## Usage
+
+1. Open your Odoo instance and log in.
+2. Go to Contacts, CRM pipeline or Activities, in list or kanban view.
+3. Click the Swades Connect toolbar icon, then Extract.
+4. Watch the status pill on the page; extraction walks every pager page.
+5. Browse the records in the popup tabs, search or filter, and export to CSV or JSON.
+
+Host permissions cover `https://*.odoo.com/*` and local `file://` pages.
+
+## Architecture
 
 ```
 src/
-├── background/          # Service worker (message routing, storage operations)
-├── content/             # Content scripts (DOM extraction logic)
-│   └── extractors/      # Separate extractors per data type
-├── popup/               # React dashboard application
-│   └── components/      # UI components (Tabs, DataTables, Filters)
-├── shared/              # Shared types, utilities, storage schema
-│   ├── types.ts         # TypeScript interfaces
-│   ├── messages.ts      # Message passing types
-│   └── storage.ts       # Storage operations
-├── injected/            # Shadow DOM status indicators
-└── shadow/              # Shadow DOM utilities
+├── background/               service worker
+│   ├── index.ts              wires chrome listeners to the router
+│   ├── router.ts             validates each message with zod, then dispatches
+│   ├── broadcast.ts          sends STORAGE_UPDATED to open popups
+│   └── handlers/             extract.ts, data.ts, rpc.ts
+├── content/                  content script, injected at document_start
+│   ├── index.ts              injects the RPC interceptor, mounts the indicator, routes messages
+│   ├── extraction.ts         paged extraction per model and auto-extract
+│   ├── rpcSync.ts            turns intercepted RPC calls into upsert and delete messages
+│   ├── odooRecords.ts        converts raw Odoo records to the storage types
+│   ├── parsing.ts            text helpers: names, currency, dates, activity types, content hashes
+│   ├── extractors/           one DOM extractor per record type
+│   ├── pagination.ts         walks Odoo's pager
+│   ├── idCache.ts            real Odoo ids captured from RPC, used by the extractors
+│   ├── viewDetector.ts       list, kanban or form; which model
+│   └── domWatcher.ts         MutationObserver behind auto-extract
+├── injected/                 rpcInterceptor.ts helpers and the Shadow DOM indicator
+├── popup/                    React dashboard
+├── shared/                   types, zod schemas, storage, lock, logger, errors, export
+└── test/                     chrome mock, fixtures and Odoo markup builders
 public/
-├── manifest.json        # Chrome Extension manifest (V3)
-└── icons/               # Extension icons
-dist/                    # Built extension (load this in Chrome)
+├── manifest.json             Manifest V3
+└── rpc-interceptor.js        runs in the page and patches fetch and XMLHttpRequest
 ```
 
----
+### Message flow
 
-## 🔧 Development
-
-### Tech Stack
-- **Extension**: Chrome Manifest V3 (service worker + content scripts)
-- **UI**: React 18 + TailwindCSS
-- **Build**: Vite with CRXJS plugin
-- **Language**: TypeScript 5
-- **Isolation**: Shadow DOM for injected indicators
-
-### Message Passing Architecture
-```typescript
-// Content Script → Background → Popup
-type MessageAction = 
-  | 'EXTRACT_DATA'           // Trigger extraction
-  | 'EXTRACTION_COMPLETE'    // Extraction finished
-  | 'EXTRACTION_ERROR'       // Extraction failed
-  | 'GET_DATA'               // Retrieve stored data
-  | 'SAVE_DATA'              // Save/merge data
-  | 'DELETE_RECORD'          // Delete single record
-  | 'DELETE_ALL_RECORDS'     // Delete all of a type
-  | 'STORAGE_UPDATED'        // Broadcast storage change
-  | 'ODOO_RPC_UPSERT'        // RPC create/update
-  | 'ODOO_RPC_DELETE';       // RPC delete
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Odoo page     │────▶│  RPC interceptor │────▶│  Content script │
+│  (fetch/XHR)    │     │  (page context)  │     │  (postMessage)  │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                                                          │ chrome.runtime
+                                                          ▼
+                        ┌──────────────────┐     ┌─────────────────┐
+                        │     Popup UI     │◀────│ Service worker  │
+                        │  (React)         │     │ (chrome.storage)│
+                        └──────────────────┘     └─────────────────┘
 ```
 
-### Storage Schema
+The service worker owns every write to stored records.
+`src/shared/schemas.ts` defines a zod schema per message action.
+The router answers `Unknown action` for anything it does not handle, and `Invalid <ACTION> message` with the failing field paths for a malformed message, before any handler runs.
+
+| Action | Sender | Effect |
+|---|---|---|
+| `EXTRACT_DATA` | Popup | Forwarded to the active tab's content script |
+| `EXTRACTION_COMPLETE` | Content script | Records merged into storage |
+| `EXTRACTION_ERROR` | Content script | Logged |
+| `GET_DATA` | Popup | Returns stored records |
+| `SAVE_DATA` | Any | Merges records into storage |
+| `DELETE_RECORD`, `DELETE_ALL_RECORDS` | Popup | Removes one record or a whole type |
+| `UPDATE_BADGE` | Content script | Sets the toolbar badge |
+| `ODOO_RPC_UPSERT`, `ODOO_RPC_DELETE` | Content script | Applies RPC sync changes |
+| `STORAGE_UPDATED` | Service worker | Tells open popups to refresh |
+| `TOGGLE_AUTO_EXTRACT`, `TOGGLE_RPC_SYNC` | Popup, to the content script | Start or stop each mode |
+
+### Storage schema
+
 ```typescript
 interface StorageSchema {
   odoo_data: {
     contacts: Contact[];
     opportunities: Opportunity[];
     activities: Activity[];
-    lastSync: number;  // Unix timestamp of last extraction
-  }
+    lastSync: number; // ms since epoch of the last write
+  };
 }
 
-// Contact record
 interface Contact {
-  id: string;           // Odoo res.partner ID from avatar URL (e.g., "contact_42")
-  name: string;         // Full name
-  email: string;        // Email address
-  phone: string;        // Phone number
-  company: string;      // Company/organization name
-  country: string;      // Country
+  id: string; // contact_{res.partner id}
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  country: string;
 }
 
-// Opportunity record  
 interface Opportunity {
-  id: string;           // Odoo crm.lead ID or content hash
-  name: string;         // Opportunity name
-  revenue: number;      // Expected revenue (numeric)
-  stage: string;        // Pipeline stage name
-  probability: number;  // Win probability (0-100)
-  closeDate: string;    // Expected closing date (ISO format)
+  id: string; // opp_{crm.lead id}, or opp_{content hash} until the real id is known
+  name: string;
+  revenue: number;
+  stage: string;
+  probability: number; // 0 to 100
+  closeDate: string;
 }
 
-// Activity record
 interface Activity {
-  id: string;           // Odoo mail.activity ID or content hash
-  type: 'call' | 'meeting' | 'todo' | 'email';  // Activity type
-  summary: string;      // Activity description
-  dueDate: string;      // Due date (ISO format)
-  assignedTo: string;   // Assigned user name
-  status: 'open' | 'done';  // Activity status
+  id: string; // act_{mail.activity id}, or act_{content hash}
+  type: 'call' | 'meeting' | 'todo' | 'email';
+  summary: string;
+  dueDate: string; // YYYY-MM-DD when Odoo exposes a date
+  assignedTo: string;
+  status: 'open' | 'done';
 }
 ```
 
-**Data Integrity Features:**
-- **Deduplication**: Records are merged by `id` - existing records are updated, new ones added
-- **Race Condition Handling**: Storage locks prevent concurrent writes from multiple tabs
-- **Automatic Cleanup**: Old records can be cleared when storage approaches 10MB limit
+Writes merge by `id`.
+On an update, empty incoming fields keep the stored value.
+`upsertRecords`, `upsertUpgradingHashIds` and `deleteRecordsById` wait up to 5 seconds for a lock in `chrome.storage.session`, and throw a `StorageError` if it stays taken.
 
----
+### Logging and errors
 
-## 🎯 DOM Selection Strategy
+`src/shared/logger.ts` gives each module a scoped logger.
+Lines look like `[Swades Connect:rpc] Upserted records from RPC` followed by a context object you can expand in DevTools.
+`src/shared/errors.ts` holds tagged error classes, so callers can tell a storage failure from other errors without matching message text.
 
-We use **CSS Selectors** as the primary extraction strategy. See [src/content/extractors/README.md](src/content/extractors/README.md) for detailed selector documentation.
+## DOM selection strategy
 
-### Why CSS Selectors?
-1. **Performance** - Faster than XPath in modern browsers
-2. **Readability** - More intuitive syntax than XPath
-3. **OWL Compatibility** - Odoo's OWL framework uses predictable class patterns
-4. **Attribute Targeting** - Odoo fields use `[name]` attributes (e.g., `td[name="email"]`)
+Extraction uses CSS selectors.
+[src/content/extractors/README.md](src/content/extractors/README.md) lists every selector.
 
-### View Detection
-```typescript
-// Detected via DOM structure
-type ViewType = 'list' | 'kanban' | 'form' | 'activity' | 'unknown';
+Odoo's OWL views use predictable classes, and each field cell carries a `name` attribute such as `td[name="email"]`, so selectors are short and stable.
 
-// View container selectors (used by viewDetector.ts):
-// - List View:     .o_list_view
-// - Kanban View:   .o_kanban_view
-// - Activity View: .o_activity_view
-// - Form View:     .o_form_view
+| View | Container | Records |
+|---|---|---|
+| List | `.o_list_view` | `tr.o_data_row` |
+| Kanban | `.o_kanban_view` | `article.o_kanban_record` |
+| Activity | `.o_activity_view` | |
+| Form | `.o_form_view` | |
 
-// Data extraction selectors (used by extractors):
-// - List rows:     tr.o_data_row
-// - Kanban cards:  article.o_kanban_record
-```
-
-### Handling Dynamic Content
-1. **MutationObserver** - Watches for DOM changes and triggers re-extraction prompts
-2. **Render Waiting** - Waits for Odoo's OWL framework to finish rendering before extraction
-3. **Pagination Detection** - Automatically handles multi-page data via `.o_pager` navigation
-
-### Key Selector Patterns
-| Data Type | List View Selector | Kanban View Selector |
-|-----------|-------------------|---------------------|
-| Contact Name | `td[name="complete_name"]` | `main span.fw-bold.fs-5` |
-| Email | `td[name="email"]` | `i.fa.fa-envelope` + sibling span |
-| Phone | `td[name="phone"]` | `i.fa.fa-phone` + sibling span |
-| Opportunity Name | `td[name="name"]` | `:scope > span.fw-bold.fs-5` |
+| Field | List view | Kanban view |
+|---|---|---|
+| Contact name | `td[name="complete_name"]` | `main span.fw-bold.fs-5` |
+| Email | `td[name="email"]` | `i.fa.fa-envelope` and its sibling span |
+| Phone | `td[name="phone"]` | `i.fa.fa-phone` and its sibling span |
+| Opportunity name | `td[name="name"]` | `:scope > span.fw-bold.fs-5` |
 | Revenue | `td[name="expected_revenue"]` | `div.o_kanban_card_crm_lead_revenue` |
-| Activity Type | `td[name="activity_type_id"]` | `span.badge span` |
+| Activity type | `td[name="activity_type_id"]` | `span.badge span` |
 
-### ID Extraction Strategy
-1. **Primary**: Parse Odoo ID from avatar URL (`/web/image/res.partner/{id}/avatar_128`)
-2. **Secondary**: RPC interception captures real IDs from API responses
-3. **Fallback**: Generate stable hash from record content using djb2 algorithm
+Before extracting, the content script waits for `.o_web_client` to render.
+It then walks the pager from page one until the counter reaches the total.
+Odoo's next button wraps from the last page to the first, so visited page ranges are tracked too.
 
----
+### Record ids
 
-## ⚙️ Extraction Process (Step-by-Step)
+1. Contacts take the real id from the avatar URL, `/web/image/res.partner/{id}/avatar_128`.
+2. Opportunities and activities take real ids from `web_search_read` and `web_read_group` responses captured by the RPC interceptor.
+3. Without a real id, the extractor hashes the record content with djb2, for example `opp_lnl5ct`.
 
-This section explains exactly how data extraction works for each type, including the RPC interception system that enables real-time sync.
+When RPC sync later sees the real id for a hashed record, `upsertUpgradingHashIds` matches it by opportunity name or activity summary and swaps in the real id, so no duplicate appears.
 
-### How RPC Interception Works
+## Extraction in detail
 
-The extension implements a **hybrid DOM + RPC approach** that goes beyond simple DOM scraping:
+### RPC interception
 
-```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Odoo Page     │────▶│  RPC Interceptor │────▶│  Content Script │
-│  (fetch/XHR)    │     │  (monkeypatch)   │     │  (postMessage)  │
-└─────────────────┘     └──────────────────┘     └─────────────────┘
-                                                          │
-                                                          ▼
-                        ┌──────────────────┐     ┌─────────────────┐
-                        │     Popup UI     │◀────│ Service Worker  │
-                        │  (React + sync)  │     │ (chrome.storage)│
-                        └──────────────────┘     └─────────────────┘
-```
+`public/rpc-interceptor.js` runs in the page, patches `fetch` and `XMLHttpRequest`, and posts matching responses to the content script.
 
-**RPC Endpoints Intercepted:**
-- `/web/dataset/call_kw/{model}/{method}` - Standard RPC calls
-- `/web/dataset/call_button/{model}/{method}` - Button action calls
+Intercepted endpoints are `/web/dataset/call_kw/{model}/{method}` and `/web/dataset/call_button/{model}/{method}`.
+Monitored models are `res.partner`, `crm.lead`, `mail.activity` and `mail.activity.schedule`.
 
-**Methods Captured:**
-| Method | Purpose |
-|--------|---------|
-| `create` | New record created |
-| `write` | Record edited |
-| `unlink` | Record deleted |
-| `web_save` | Record saved via form |
-| `action_done` | Activity marked as done |
-| `name_create` | Quick-create (e.g., contact from opportunity) |
-| `web_search_read` | List/Kanban data loaded (captures real IDs) |
+| Method | Meaning | What the extension does |
+|---|---|---|
+| `web_search_read` | List or kanban data loaded | Caches real ids and upserts the records |
+| `web_read_group` | Grouped kanban loaded, such as the pipeline | Same, for opportunities |
+| `create`, `web_save` | Record created or saved | Upserts the saved record; id-only results are merged with the submitted fields |
+| `write` | Record edited | Ignored; the following `web_save` carries the full record |
+| `unlink` | Record deleted | Deletes the stored record |
+| `action_done` | Activity marked done | Deletes the activity |
+| `name_create` | Quick-create from a relation field | Adds the contact |
 
-**Models Monitored:** `res.partner`, `crm.lead`, `mail.activity`, `mail.activity.schedule`
+The activity scheduling wizard, `mail.activity.schedule`, returns its own id rather than the activity id.
+Its saves are skipped, and the `web_search_read` that follows brings the real record.
 
----
+### Contacts
 
-### Contact Extraction
+1. Rows are `tr.o_data_row` in list view and `article.o_kanban_record` in kanban view.
+2. The id comes from the avatar URL; without one, the row index gives `contact_idx_{n}`.
+3. `complete_name` may read "Company, Person", and is split when no company column exists.
+4. Email, phone and country come from `data-tooltip` where present and cell text otherwise.
 
-**Primary Key:** `contact_{odoo_id}` extracted from avatar image URL
+### Opportunities
 
-**Step-by-Step Process:**
-1. **Detect View Type** → Check for `tr.o_data_row` (list) or `article.o_kanban_record` (kanban)
-2. **Extract Real ID from Avatar URL:**
-   ```
-   Avatar URL: /web/image/res.partner/42/avatar_128
-   Regex: /web/image/res.partner/(\d+)/
-   Extracted ID: 42
-   Final Key: contact_42
-   ```
-3. **Extract Fields:**
-   - Name: `td[name="complete_name"]` → parses "Company, Person" format
-   - Email: `td[name="email"]` with `data-tooltip` attribute
-   - Phone: `td[name="phone"]` with `data-tooltip` attribute
-   - Company: `td[name="parent_id"]` or `td[name="company_name"]` or parsed from complete_name
-   - Country: `td[name="country_id"]`
-4. **Fallback ID:** If no avatar URL found → `contact_idx_{row_index}`
+1. The id cache is seeded from opportunities already stored under real ids.
+2. List rows give name, revenue, stage, probability and deadline.
+3. Kanban cards take their stage from the column header and their probability from the priority stars, 0, 33, 67 or 100.
+4. The id comes from the cache by name, or a hash of name, stage and revenue.
 
-**Why Contacts Have Stable IDs:**
-- Every contact row/card has an avatar image with the real Odoo `res.partner` ID embedded in the URL
-- This makes contact IDs inherently stable across page reloads
-- No hash fallback or RPC interception needed for ID resolution
+### Activities
 
----
+Activity summaries are not unique, so ids map by row position on the current page.
+Odoo's default activity sort is not unique either, and rows can shift between pages.
+Full-page extraction therefore uses the RPC records captured while paging, not the DOM rows.
 
-### Opportunity Extraction
+### Edits and deletes
 
-**Primary Key:** `opp_{odoo_id}` or `opp_{content_hash}`
+| Source | Path |
+|---|---|
+| Edit in Odoo | `web_save` reaches the content script, which sends `ODOO_RPC_UPSERT`; the service worker merges the fields |
+| Delete in Odoo | `unlink` or `action_done` sends `ODOO_RPC_DELETE` with prefixed ids |
+| Delete in the popup | `DELETE_RECORD` or `DELETE_ALL_RECORDS` |
 
-**Step-by-Step Process:**
-1. **Initialize ID Cache** → Load previously captured IDs from `chrome.storage.local`
-2. **Detect View Type** → List (`tr.o_data_row`) or Kanban (`.o_kanban_group` stages with `article.o_kanban_record` cards)
-3. **Extract Fields:**
-   - Name: `td[name="name"]` with `data-tooltip` (list) or `:scope > span.fw-bold.fs-5` (kanban)
-   - Revenue: `td[name="expected_revenue"]` (list) or `div.o_kanban_card_crm_lead_revenue` (kanban)
-   - Stage: `td[name="stage_id"]` (list) or `.o_kanban_header .o_column_title span.text-truncate` (kanban)
-   - Probability: `td[name="probability"]` (list) or priority stars count × 33% (kanban)
-   - Close Date: `td[name="date_deadline"]` or `td[name="date_closed"]`
-4. **Resolve ID:**
-   - **First:** Check ID cache by opportunity name → returns real Odoo ID if found
-   - **Fallback:** Generate djb2 hash from `name + stage + revenue`
+A record stored under a hash id and deleted in Odoo before any edit cannot be matched, because the delete only carries the real id.
+Re-extracting the page removes it.
 
-**ID Upgrade Mechanism:**
-```
-DOM Extraction → Creates: opp_lnl5ct (hash-based)
-User Edits in Odoo → RPC captures: opp_24 (real ID)
-Background Worker → Matches by name → Upgrades: opp_lnl5ct → opp_24
-```
+## Contributing
 
-This ensures edits are properly tracked even when the original extraction used hash IDs.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
----
+## Contact
 
-### Activity Extraction
-
-**Primary Key:** `act_{odoo_id}` or `act_{content_hash}`
-
-**Step-by-Step Process:**
-1. **Detect View Type** → List (`tr.o_data_row`) or Kanban (`article.o_kanban_record`)
-2. **ID Cache Population** → Activity IDs are captured from `web_search_read` RPC in real-time (row-index based)
-3. **Extract Fields:**
-   - Type: `td[name="activity_type_id"]` (list) or `span.badge span` (kanban) → normalized to `call|meeting|email|todo`
-   - Summary: `td[name="summary"]` with `data-tooltip` (list) or `span.text-truncate` (kanban)
-   - Due Date: `td[name="date_deadline"]` → parses title attribute or relative dates like "In 5 days"
-   - Assigned To: `td[name="user_id"]` (list) or `footer div[name="user_id"]` (kanban)
-   - Status: Checks for `.o_activity_done` class on row/card → `open` or `done`
-4. **Resolve ID:**
-   - **First:** Lookup by row index in activity ID array (populated from `web_search_read`)
-   - **Fallback:** Generate djb2 hash from `summary + type + dueDate + assignedTo`
-
-**Special Handling:**
-- Activity summaries are NOT unique (unlike opportunity names)
-- Uses row-index-based ID mapping (RPC `web_search_read` provides ordered IDs)
-- `action_done` method triggers deletion (activity marked as completed)
-
----
-
-### Real-Time Sync Flow
-
-When a user creates/edits/deletes in Odoo, the extension captures it in real-time:
-
-```
-1. User Action in Odoo (e.g., edit opportunity)
-          │
-          ▼
-2. Odoo makes RPC call: POST /web/dataset/call_kw/crm.lead/write
-          │
-          ▼
-3. RPC Interceptor captures request + response
-          │
-          ▼
-4. Interceptor emits: window.postMessage({ source: 'odoo-rpc-interceptor', payload: {...} })
-          │
-          ▼
-5. Content Script receives message, converts to typed record
-          │
-          ▼
-6. Content Script sends: chrome.runtime.sendMessage({ action: 'ODOO_RPC_UPSERT', data: {...} })
-          │
-          ▼
-7. Service Worker processes:
-   - For opportunities: Match by name if ID not found → upgrade hash ID to real ID
-   - For activities: Match by summary if ID not found → upgrade hash ID to real ID
-   - Merge fields (new non-empty values take precedence)
-          │
-          ▼
-8. Storage updated, broadcasts STORAGE_UPDATED to popup
-          │
-          ▼
-9. Popup UI refreshes automatically via useStorageData hook
-```
-
----
-
-### Edit & Delete Handling
-
-**Edit Detection:**
-- RPC methods `write` and `web_save` indicate record updates
-- Interceptor captures the record ID and changed fields from response
-- Background worker merges changes with existing stored data
-
-**Delete Detection:**
-- RPC method `unlink` indicates record deletion
-- For activities: `action_done` also triggers deletion (completed = removed)
-- Background worker removes matching records by ID from storage
-
-**Delete from Popup:**
-- User clicks trash icon → sends `DELETE_RECORD` message
-- Service worker calls `deleteRecord(type, id)` 
-- Storage updated, broadcasts change to all tabs
-
----
-
-### Deduplication Strategy
-
-All record types use the same deduplication logic:
-
-```typescript
-function deduplicateById<T extends { id: string }>(records: T[]): T[] {
-  const map = new Map<string, T>();
-  records.forEach(record => map.set(record.id, record)); // Last one wins
-  return Array.from(map.values());
-}
-```
-
-**Key Points:**
-- Records are merged by `id` field
-- Later records overwrite earlier ones (handles updates)
-- Works across DOM extraction + RPC captures
-- Storage locks prevent race conditions from multiple tabs
-
----
-
-## ✉️ Contact
-
-**Developer**: Gautham Krishna  
-**Email**: [heyitsgautham@gmail.com](mailto:heyitsgautham@gmail.com)  
-**Project**: [Swades Connect - GitHub Repository](https://github.com/heyitsgautham/swades-connect)
-
-Built with ❤️ using Chrome Manifest V3, React 18, TypeScript, and TailwindCSS
+Gautham Krishna, [heyitsgautham@gmail.com](mailto:heyitsgautham@gmail.com).
