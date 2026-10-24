@@ -1,5 +1,19 @@
-import { describe, it, expect } from 'vitest';
-import { deduplicateById } from '../storage';
+import { describe, it, expect, vi } from 'vitest';
+import {
+  clearAll,
+  deduplicateById,
+  deleteAllRecords,
+  deleteRecord,
+  deleteRecordsById,
+  getData,
+  initializeStorage,
+  saveData,
+  upsertRecords,
+} from '../storage';
+import { acquireLock } from '../lock';
+import type { StorageSchema } from '../types';
+import { chromeMock } from '../../test/chromeMock';
+import { makeActivity, makeContact, makeOpportunity } from '../../test/fixtures';
 
 describe('Storage utilities', () => {
   describe('deduplicateById', () => {
@@ -59,6 +73,109 @@ describe('Storage utilities', () => {
 
       expect(deduplicated).toHaveLength(1);
       expect(deduplicated[0].version).toBe(4);
+    });
+  });
+});
+
+describe('storage against chrome.storage.local', () => {
+  const stored = () => chromeMock().storage.local.dump().odoo_data as StorageSchema['odoo_data'];
+
+  it('getData returns empty collections before anything is saved', async () => {
+    expect(await getData()).toEqual({ contacts: [], opportunities: [], activities: [], lastSync: 0 });
+  });
+
+  it('initializeStorage writes the default shape once and keeps existing data', async () => {
+    await initializeStorage();
+    expect(stored().contacts).toEqual([]);
+
+    await saveData([makeContact()], [], []);
+    await initializeStorage();
+    expect(stored().contacts).toHaveLength(1);
+  });
+
+  it('saveData merges with existing records and lets the newer copy win', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-20T10:00:00Z'));
+    await saveData([makeContact({ id: 'contact_1', phone: 'old' })], [makeOpportunity()], []);
+    await saveData([makeContact({ id: 'contact_1', phone: 'new' }), makeContact({ id: 'contact_2' })], [], [makeActivity()]);
+
+    const data = stored();
+    expect(data.contacts.map((c) => [c.id, c.phone])).toEqual([
+      ['contact_1', 'new'],
+      ['contact_2', '+1 555 0101'],
+    ]);
+    expect(data.opportunities).toHaveLength(1);
+    expect(data.activities).toHaveLength(1);
+    expect(data.lastSync).toBe(Date.parse('2026-01-20T10:00:00Z'));
+  });
+
+  it('deleteRecord removes one record from the named collection only', async () => {
+    await saveData([makeContact({ id: 'x' })], [makeOpportunity({ id: 'x' })], []);
+    await deleteRecord('contacts', 'x');
+    expect(stored().contacts).toEqual([]);
+    expect(stored().opportunities).toHaveLength(1);
+  });
+
+  it('deleteAllRecords empties one collection', async () => {
+    await saveData([makeContact()], [makeOpportunity()], [makeActivity()]);
+    await deleteAllRecords('activities');
+    expect(stored().activities).toEqual([]);
+    expect(stored().contacts).toHaveLength(1);
+  });
+
+  it('clearAll wipes other keys and restores the default shape', async () => {
+    await chromeMock().storage.local.set({ rpc_sync_enabled: true });
+    await saveData([makeContact()], [], []);
+    await clearAll();
+    expect(chromeMock().storage.local.dump()).toEqual({
+      odoo_data: { contacts: [], opportunities: [], activities: [], lastSync: 0 },
+    });
+  });
+
+  describe('upsertRecords', () => {
+    it('returns zero counts without touching storage for an empty batch', async () => {
+      expect(await upsertRecords('contacts', [])).toEqual({ added: 0, updated: 0 });
+      expect(chromeMock().storage.local.set).not.toHaveBeenCalled();
+    });
+
+    it('adds new records and merges updates, ignoring empty incoming fields', async () => {
+      await saveData([makeContact({ id: 'contact_1', email: 'keep@example.com', phone: '111' })], [], []);
+
+      const result = await upsertRecords('contacts', [
+        makeContact({ id: 'contact_1', email: '', phone: '222' }),
+        makeContact({ id: 'contact_2' }),
+      ]);
+
+      expect(result).toEqual({ added: 1, updated: 1 });
+      const first = stored().contacts.find((c) => c.id === 'contact_1');
+      expect(first).toMatchObject({ email: 'keep@example.com', phone: '222' });
+      expect(stored().contacts).toHaveLength(2);
+    });
+
+    it('releases its lock so the next write can proceed', async () => {
+      await upsertRecords('contacts', [makeContact()]);
+      expect(chromeMock().storage.session.dump().extraction_lock).toBeUndefined();
+    });
+
+    it('throws when another writer holds the lock past the wait limit', async () => {
+      vi.useFakeTimers();
+      await acquireLock('someone-else');
+      const pending = upsertRecords('contacts', [makeContact()]);
+      const assertion = expect(pending).rejects.toThrow(/Failed to acquire lock/);
+      await vi.advanceTimersByTimeAsync(5_100);
+      await assertion;
+    });
+  });
+
+  describe('deleteRecordsById', () => {
+    it('removes matching ids and reports how many were found', async () => {
+      await saveData([], [makeOpportunity({ id: 'opp_1' }), makeOpportunity({ id: 'opp_2' })], []);
+      expect(await deleteRecordsById('opportunities', ['opp_1', 'opp_missing'])).toBe(1);
+      expect(stored().opportunities.map((o) => o.id)).toEqual(['opp_2']);
+    });
+
+    it('returns 0 for an empty id list', async () => {
+      expect(await deleteRecordsById('opportunities', [])).toBe(0);
     });
   });
 });

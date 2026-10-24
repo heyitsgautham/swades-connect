@@ -29,3 +29,4 @@ dist-ssr
 prd.md
 repos/*
 docs/*
+coverage/
