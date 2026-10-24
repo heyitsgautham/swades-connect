@@ -11,6 +11,7 @@ import {
   upsertRecords,
 } from '../storage';
 import { acquireLock } from '../lock';
+import { StorageError } from '../errors';
 import type { StorageSchema } from '../types';
 import { chromeMock } from '../../test/chromeMock';
 import { makeActivity, makeContact, makeOpportunity } from '../../test/fixtures';
@@ -161,7 +162,9 @@ describe('storage against chrome.storage.local', () => {
       vi.useFakeTimers();
       await acquireLock('someone-else');
       const pending = upsertRecords('contacts', [makeContact()]);
-      const assertion = expect(pending).rejects.toThrow(/Failed to acquire lock/);
+      const assertion = expect(pending).rejects.toSatisfy(
+        (error) => error instanceof StorageError && /Failed to acquire lock/.test(error.message) && error.context.type === 'contacts',
+      );
       await vi.advanceTimersByTimeAsync(5_100);
       await assertion;
     });

@@ -1,5 +1,6 @@
 import type { StorageSchema, Contact, Opportunity, Activity } from './types';
 import { waitForLock, releaseLock } from './lock';
+import { StorageError } from './errors';
 
 const STORAGE_KEY = 'odoo_data';
 
@@ -123,7 +124,7 @@ export async function upsertRecords(
   const acquired = await waitForLock(lockId, 5000);
 
   if (!acquired) {
-    throw new Error(`Failed to acquire lock for upsert operation on ${type}`);
+    throw new StorageError(`Failed to acquire lock for upsert operation on ${type}`, { type, lockId });
   }
 
   try {
@@ -193,7 +194,7 @@ export async function deleteRecordsById(
   const acquired = await waitForLock(lockId, 5000);
 
   if (!acquired) {
-    throw new Error(`Failed to acquire lock for delete operation on ${type}`);
+    throw new StorageError(`Failed to acquire lock for delete operation on ${type}`, { type, lockId });
   }
 
   try {
