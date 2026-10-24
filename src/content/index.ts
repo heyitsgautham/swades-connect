@@ -9,7 +9,8 @@
 import { mountIndicator } from '../injected/indicator';
 import { injectRpcInterceptor } from '../injected/rpcInterceptor';
 import { createLogger, describeError, initLogLevelFromStorage } from '../shared/logger';
-import type { ExtensionMessage, MessageResponse } from '../shared/messages';
+import type { MessageResponse } from '../shared/messages';
+import { parseContentMessage } from '../shared/schemas';
 import { handleExtraction, startAutoExtract, stopAutoExtract } from './extraction';
 import { startRpcSync, stopRpcSync } from './rpcSync';
 
@@ -40,35 +41,39 @@ chrome.storage.local.get(['auto_extract_enabled', 'rpc_sync_enabled'], (result) 
  * @see https://developer.chrome.com/docs/extensions/develop/concepts/messaging
  */
 chrome.runtime.onMessage.addListener(
-  (message: ExtensionMessage, _sender, sendResponse: (response: MessageResponse) => void): boolean => {
+  (raw: unknown, _sender, sendResponse: (response: MessageResponse) => void): boolean => {
+    const parsed = parseContentMessage(raw);
+    if (!parsed.ok) {
+      if (parsed.reason === 'unknown-action') return false; // Not addressed to the content script.
+      log.warn('Rejected malformed message', { action: parsed.action, issues: parsed.issues });
+      sendResponse({ success: false, error: `Invalid ${parsed.action} message: ${parsed.issues.join('; ')}` });
+      return false;
+    }
+
+    const message = parsed.message;
     log.debug('Message received', { action: message.action });
 
-    if (message.action === 'EXTRACT_DATA') {
-      handleExtraction()
-        .then(sendResponse)
-        .catch((error) => {
-          log.error('Extraction handler error', { error: describeError(error) });
-          sendResponse({ success: false, error: describeError(error) });
-        });
-      return true;
-    }
+    switch (message.action) {
+      case 'EXTRACT_DATA':
+        handleExtraction()
+          .then(sendResponse)
+          .catch((error) => {
+            log.error('Extraction handler error', { error: describeError(error) });
+            sendResponse({ success: false, error: describeError(error) });
+          });
+        return true;
 
-    if (message.action === 'TOGGLE_AUTO_EXTRACT') {
-      const enabled = Boolean((message as unknown as { enabled?: boolean }).enabled);
-      if (enabled) startAutoExtract();
-      else stopAutoExtract();
-      sendResponse({ success: true, data: { enabled } });
-      return true;
-    }
+      case 'TOGGLE_AUTO_EXTRACT':
+        if (message.enabled) startAutoExtract();
+        else stopAutoExtract();
+        sendResponse({ success: true, data: { enabled: message.enabled } });
+        return false;
 
-    if (message.action === 'TOGGLE_RPC_SYNC') {
-      const enabled = Boolean((message as unknown as { enabled?: boolean }).enabled);
-      if (enabled) startRpcSync();
-      else stopRpcSync();
-      sendResponse({ success: true, data: { enabled } });
-      return true;
+      case 'TOGGLE_RPC_SYNC':
+        if (message.enabled) startRpcSync();
+        else stopRpcSync();
+        sendResponse({ success: true, data: { enabled: message.enabled } });
+        return false;
     }
-
-    return false;
   },
 );
