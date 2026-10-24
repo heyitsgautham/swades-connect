@@ -1,3 +1,5 @@
+import { getActivityIdCacheSize, getOpportunityIdCacheSize } from './idCache';
+
 export interface PaginationConfig {
   maxPages?: number;        // Safety limit (default: 50)
   delayBetweenPages?: number; // ms to wait after clicking next (default: 1500)
@@ -242,14 +244,8 @@ async function waitForPageLoad(baseDelay: number): Promise<void> {
  * Strategy: Poll to check if cache size has increased, indicating new IDs were cached
  */
 async function waitForRpcCachePopulation(timeout: number): Promise<void> {
-  // Get cache size tracking function from global scope (set by content/index.ts)
-  const getCacheSize = (window as any).__swadesCacheSize;
-  
-  if (!getCacheSize) {
-    console.log('[Swades Connect] Cache size tracker not available, skipping wait');
-    return;
-  }
-  
+  const getCacheSize = () => getActivityIdCacheSize() + getOpportunityIdCacheSize();
+
   const initialSize = getCacheSize();
   const startTime = Date.now();
   const pollInterval = 100; // Check every 100ms

@@ -17,8 +17,6 @@ import {
   setOpportunityId,
   populateActivityIdCache,
   setActivityId,
-  getActivityIdCacheSize,
-  getOpportunityIdCacheSize,
   startActivityExtractionSession,
   getAllActivityRecords
 } from './idCache';
@@ -34,12 +32,6 @@ let rpcSyncEnabled = false;
 let rpcCleanupFn: (() => void) | null = null;
 
 console.log('[Swades Connect] Content script loaded on:', window.location.href);
-
-// Expose cache size function for pagination synchronization
-// This allows pagination.ts to poll for cache updates without circular dependencies
-(window as any).__swadesCacheSize = () => {
-  return getActivityIdCacheSize() + getOpportunityIdCacheSize();
-};
 
 // Inject RPC interceptor IMMEDIATELY (before Odoo loads data)
 // This must happen at document_start to capture web_search_read calls

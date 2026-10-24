@@ -152,7 +152,7 @@ let allSeenActivityIds = new Set<number>();
  * Key is the activity ID, value is the full RPC record
  * This allows us to extract from RPC data when DOM extraction misses records
  */
-let allActivityRecords = new Map<number, Record<string, unknown>>();
+const allActivityRecords = new Map<number, Record<string, unknown>>();
 
 /**
  * Start a new extraction session - resets tracking but KEEPS accumulated RPC records
