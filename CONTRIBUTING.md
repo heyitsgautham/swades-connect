@@ -34,13 +34,9 @@ To see debug logs, run `chrome.storage.local.set({ log_level: 'debug' })` in the
 - Any new runtime message action needs a schema in `schemas.ts`, a handler, and a router test.
 - Log through `createLogger(scope)` from `src/shared/logger.ts`, not `console`.
 - Keep files under 500 lines. Split by responsibility when one grows past that.
-- ESLint enforces the rules. Run `pnpm run lint`.
+- ESLint enforces the rules and Prettier the formatting. Run `pnpm run lint` and `pnpm run format`.
 
 ## Commits
 
 Use conventional commits, `type(scope): subject`, for example `fix(opportunities): map three filled priority stars to 100 percent`.
 Keep each commit to one change, and include the tests that prove it.
-
-## Changelog
-
-Add a line under "Unreleased" in `CHANGELOG.md` for any change a user or contributor would notice.

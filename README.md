@@ -69,7 +69,7 @@ pnpm install --frozen-lockfile
 pnpm run check
 ```
 
-`pnpm run check` runs lint, typecheck, the test suite with coverage, and the production build, in the same order as CI.
+`pnpm run check` runs lint, the Prettier check, typecheck, the test suite with coverage, and the production build, in the same order as CI.
 
 ## Commands
 
@@ -78,11 +78,13 @@ pnpm run check
 | `pnpm run dev` | Vite dev build with extension hot reload |
 | `pnpm run build` | `tsc -b` then the production build into `dist/` |
 | `pnpm run lint` | ESLint over the repo |
+| `pnpm run format` | Prettier, rewriting files in place |
+| `pnpm run format:check` | Prettier, failing on unformatted files |
 | `pnpm run typecheck` | `tsc -b` with no emit |
 | `pnpm test` | Vitest in watch mode |
 | `pnpm run test:run` | The test suite once |
 | `pnpm run test:coverage` | The test suite once with V8 coverage; fails below the thresholds in `vitest.config.ts` |
-| `pnpm run check` | lint, typecheck, test:coverage and build in sequence |
+| `pnpm run check` | lint, format:check, typecheck, test:coverage and build in sequence |
 
 ## Testing
 
@@ -99,14 +101,14 @@ The saved pages under `odoo-html/` are for manual testing in the browser and no 
 
 Coverage covers `src/shared`, `src/content`, `src/background` and `src/injected`.
 CI fails if it drops below 75% of statements, functions and lines or 70% of branches.
-The React popup is checked by lint, typecheck and build, not by unit tests.
+The React popup is outside the coverage numbers; its shared tab controls and sort helper have their own specs.
 
 ## Docker
 
 The extension runs inside Chrome, so the container is a reproducible build and test environment, not a server.
 
 ```bash
-docker compose run --rm check     # lint, typecheck, test:coverage and build
+docker compose run --rm check     # the full pnpm run check sequence
 docker compose run --rm build     # writes the unpacked extension to ./dist
 docker build --target extension -o out .   # same result without compose
 ```
