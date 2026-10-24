@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 describe('handleExtraction', () => {
-  it('extracts the contacts page and reports them to the service worker', async () => {
+  it('extracts the contacts page and reports them with elapsed time, not a timestamp', async () => {
     renderOdooPage('res.partner', contactListRows([{ partnerId: 12, completeName: 'Mira Testwell', email: 'mira@example.com' }]));
 
     const response = await runExtraction();
@@ -51,9 +51,11 @@ describe('handleExtraction', () => {
     expect(message?.data?.contacts).toEqual([
       { id: 'contact_12', name: 'Mira Testwell', email: 'mira@example.com', phone: '', company: '', country: '' },
     ]);
-    const metadata = message?.data?.metadata as { dataModel: string; recordsExtracted: number };
+    const metadata = message?.data?.metadata as { extractionTimeMs: number; dataModel: string; recordsExtracted: number };
     expect(metadata.dataModel).toBe('res.partner');
     expect(metadata.recordsExtracted).toBe(1);
+    expect(metadata.extractionTimeMs).toBeGreaterThanOrEqual(500);
+    expect(metadata.extractionTimeMs).toBeLessThan(60_000);
     expect(setIndicatorState).toHaveBeenLastCalledWith('success', 'Done');
     expect(isExtractionRunning()).toBe(false);
   });

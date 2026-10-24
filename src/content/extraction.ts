@@ -115,6 +115,7 @@ export async function handleExtraction(): Promise<MessageResponse> {
   }
 
   isExtracting = true;
+  const startedAt = Date.now();
 
   try {
     setIndicatorState('extracting', 'Extracting...');
@@ -145,7 +146,7 @@ export async function handleExtraction(): Promise<MessageResponse> {
             viewType,
             dataModel,
             recordsExtracted: totalRecords,
-            extractionTimeMs: Date.now(),
+            extractionTimeMs: Date.now() - startedAt,
             timestamp: new Date().toISOString(),
           },
         },
