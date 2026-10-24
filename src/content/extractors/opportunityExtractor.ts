@@ -1,43 +1,6 @@
 import type { Opportunity } from '../../shared/types';
 import { lookupOpportunityId, initializeOpportunityIdCacheFromStorage } from '../idCache';
-
-/**
- * Generate a stable, content-based ID for records where we can't get the real Odoo ID.
- * Uses a simple hash of the content to create a deterministic ID.
- */
-function generateContentHash(prefix: string, ...parts: (string | number)[]): string {
-  const content = parts.map(p => String(p).trim().toLowerCase()).join('|');
-  // Simple hash function (djb2)
-  let hash = 5381;
-  for (let i = 0; i < content.length; i++) {
-    hash = ((hash << 5) + hash) + content.charCodeAt(i);
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  // Convert to positive number and then to base36 for shorter string
-  const positiveHash = (hash >>> 0).toString(36);
-  return `${prefix}_${positiveHash}`;
-}
-
-/**
- * Parse currency strings like "₹ 0.00" or "₹ 1,234.56" to numbers
- */
-function parseRevenue(revenueText: string): number {
-  if (!revenueText) return 0;
-  
-  try {
-    // Remove currency symbols, spaces, and commas
-    const cleaned = revenueText
-      .replace(/[₹$€£¥]/g, '')
-      .replace(/,/g, '')
-      .replace(/\s/g, '')
-      .trim();
-    
-    const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? 0 : parsed;
-  } catch {
-    return 0;
-  }
-}
+import { generateContentHash, parseRevenue } from '../parsing';
 
 /**
  * Extract opportunity from a list view row

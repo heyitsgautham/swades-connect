@@ -1,4 +1,5 @@
 import type { Contact } from '../../shared/types';
+import { parseCompleteName } from '../parsing';
 
 /**
  * Extracts contacts from both Odoo list and kanban views.
@@ -280,38 +281,4 @@ function extractCompanyFromKanban(card: HTMLElement): string {
   } catch {
     return '';
   }
-}
-
-/**
- * Parses a complete_name field that may contain "company, person name" format.
- * In Odoo, when a contact has a parent company, the complete_name is formatted as:
- * "Company Name, Person Name"
- * 
- * @param completeName - The raw complete_name value from Odoo
- * @returns Object with parsed name and company, or just name if no comma present
- */
-function parseCompleteName(completeName: string): { name: string; company: string } {
-  if (!completeName) {
-    return { name: '', company: '' };
-  }
-
-  // Check if the name contains a comma (indicating "company, person" format)
-  const commaIndex = completeName.indexOf(',');
-  
-  if (commaIndex !== -1) {
-    // Format: "Company Name, Person Name"
-    const companyPart = completeName.substring(0, commaIndex).trim();
-    const personPart = completeName.substring(commaIndex + 1).trim();
-    
-    // Only use this parsing if both parts are non-empty
-    if (companyPart && personPart) {
-      return {
-        name: personPart,
-        company: companyPart,
-      };
-    }
-  }
-
-  // No comma or invalid format - return the whole string as name
-  return { name: completeName.trim(), company: '' };
 }
