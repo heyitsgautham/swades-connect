@@ -15,8 +15,7 @@ function extractOpportunityFromRow(row: HTMLElement): Opportunity | null {
 
     // Opportunity Name: td[name="name"] → use data-tooltip attribute
     const nameCell = row.querySelector('td[name="name"]');
-    const name = nameCell?.getAttribute('data-tooltip')?.trim() || 
-                 nameCell?.textContent?.trim() || '';
+    const name = nameCell?.getAttribute('data-tooltip')?.trim() || nameCell?.textContent?.trim() || '';
 
     if (!name) {
       return null;
@@ -25,32 +24,27 @@ function extractOpportunityFromRow(row: HTMLElement): Opportunity | null {
     // Expected Revenue: td[name="expected_revenue"] → contains div span with "₹ 0.00" format
     const revenueCell = row.querySelector('td[name="expected_revenue"]');
     const revenueSpan = revenueCell?.querySelector('div span');
-    const revenueText = revenueSpan?.textContent?.trim() || 
-                        revenueCell?.textContent?.trim() || '0';
+    const revenueText = revenueSpan?.textContent?.trim() || revenueCell?.textContent?.trim() || '0';
     const revenue = parseRevenue(revenueText);
 
     // Stage: td[name="stage_id"] → use data-tooltip attribute
     const stageCell = row.querySelector('td[name="stage_id"]');
-    const stage = stageCell?.getAttribute('data-tooltip')?.trim() || 
-                  stageCell?.textContent?.trim() || 'Unknown';
+    const stage = stageCell?.getAttribute('data-tooltip')?.trim() || stageCell?.textContent?.trim() || 'Unknown';
 
     // Contact Name: td[name="contact_name"] → use data-tooltip attribute (for reference)
     const contactCell = row.querySelector('td[name="contact_name"]');
-    const _contactName = contactCell?.getAttribute('data-tooltip')?.trim() || 
-                        contactCell?.textContent?.trim() || '';
+    const _contactName = contactCell?.getAttribute('data-tooltip')?.trim() || contactCell?.textContent?.trim() || '';
     void _contactName; // Preserve for future use
 
     // Email: td[name="email_from"] → use data-tooltip attribute (for reference)
     const emailCell = row.querySelector('td[name="email_from"]');
-    const _email = emailCell?.getAttribute('data-tooltip')?.trim() || 
-                  emailCell?.textContent?.trim() || '';
+    const _email = emailCell?.getAttribute('data-tooltip')?.trim() || emailCell?.textContent?.trim() || '';
     void _email; // Preserve for future use
 
     // Salesperson: td[name="user_id"] → contains div.o_field_many2one_avatar_user span (for reference)
     const userCell = row.querySelector('td[name="user_id"]');
     const salespersonSpan = userCell?.querySelector('div.o_field_many2one_avatar_user span');
-    const _salesperson = salespersonSpan?.textContent?.trim() || 
-                        userCell?.textContent?.trim() || '';
+    const _salesperson = salespersonSpan?.textContent?.trim() || userCell?.textContent?.trim() || '';
     void _salesperson; // Preserve for future use
 
     // Probability and close date may not be visible in list view
@@ -65,9 +59,7 @@ function extractOpportunityFromRow(row: HTMLElement): Opportunity | null {
     // Try to get real Odoo ID from cache (populated by web_search_read RPC calls)
     // Fall back to content-based hash if not found
     const realId = lookupOpportunityId(name);
-    const id = realId !== null 
-      ? `opp_${realId}` 
-      : generateContentHash('opp', name, stage, revenue);
+    const id = realId !== null ? `opp_${realId}` : generateContentHash('opp', name, stage, revenue);
 
     return {
       id,
@@ -86,10 +78,7 @@ function extractOpportunityFromRow(row: HTMLElement): Opportunity | null {
 /**
  * Extract opportunity from a kanban card
  */
-function extractOpportunityFromKanbanCard(
-  card: HTMLElement,
-  stageName: string
-): Opportunity | null {
+function extractOpportunityFromKanbanCard(card: HTMLElement, stageName: string): Opportunity | null {
   try {
     // We'll generate a content-based ID after extracting the data
     // because Odoo's data-id (e.g., "datapoint_39") changes between page loads
@@ -111,8 +100,9 @@ function extractOpportunityFromKanbanCard(
     // HTML structure: <div class="d-flex"><div name="partner_id">...</div><span class="ms-2 text-truncate">Name</span></div>
     const partnerDiv = card.querySelector('div[name="partner_id"]');
     const partnerContainer = partnerDiv?.closest('.d-flex');
-    const partnerSpan = partnerContainer?.querySelector('span.ms-2.text-truncate') ||
-                        partnerContainer?.querySelector('span.text-truncate');
+    const partnerSpan =
+      partnerContainer?.querySelector('span.ms-2.text-truncate') ||
+      partnerContainer?.querySelector('span.text-truncate');
     const _partnerName = partnerSpan?.textContent?.trim() || '';
     void _partnerName; // Available for future use if Opportunity type is extended
 
@@ -120,8 +110,8 @@ function extractOpportunityFromKanbanCard(
     // Filled stars have 'fa-star' class but NOT 'fa-star-o' (outline)
     const priorityDiv = card.querySelector('div[name="priority"]');
     const allStars = priorityDiv?.querySelectorAll('a.o_priority_star') || [];
-    const filledStars = Array.from(allStars).filter(star =>
-      star.classList.contains('fa-star') && !star.classList.contains('fa-star-o')
+    const filledStars = Array.from(allStars).filter(
+      (star) => star.classList.contains('fa-star') && !star.classList.contains('fa-star-o'),
     );
     // Convert to a percentage of the stars shown (0, 33, 67, 100 for Odoo's three stars)
     const priority = allStars.length > 0 ? Math.round((filledStars.length / allStars.length) * 100) : 0;
@@ -136,9 +126,7 @@ function extractOpportunityFromKanbanCard(
     // Try to get real Odoo ID from cache (populated by web_search_read RPC calls)
     // Fall back to content-based hash if not found
     const realId = lookupOpportunityId(name);
-    const id = realId !== null 
-      ? `opp_${realId}` 
-      : generateContentHash('opp', name, stage, revenue);
+    const id = realId !== null ? `opp_${realId}` : generateContentHash('opp', name, stage, revenue);
 
     return {
       id,
@@ -157,7 +145,7 @@ function extractOpportunityFromKanbanCard(
 /**
  * Main function to extract opportunities from the current view
  * Automatically detects list or kanban view
- * 
+ *
  * Pre-populates the ID cache from storage to address the timing issue
  * where web_search_read happens before the RPC interceptor is installed.
  */
@@ -175,7 +163,7 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
 
     if (listRows.length > 0) {
       log.debug(`Extracting from list view (${listRows.length} rows)`);
-      
+
       listRows.forEach((row, index) => {
         try {
           const opportunity = extractOpportunityFromRow(row as HTMLElement);
@@ -195,7 +183,7 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
 
     if (kanbanGroups.length > 0) {
       log.debug(`Extracting from kanban view (${kanbanGroups.length} stages)`);
-      
+
       kanbanGroups.forEach((group) => {
         try {
           // Stage name: .o_kanban_group .o_kanban_header .o_column_title span.text-truncate
@@ -205,7 +193,7 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
           // Stage revenue (for debugging/logging)
           const stageRevenueEl = group.querySelector('.o_animated_number');
           const stageRevenue = stageRevenueEl?.textContent?.trim() || '';
-          
+
           if (stageRevenue) {
             log.debug(`Stage "${stageName}" total revenue: ${stageRevenue}`);
           }
@@ -220,7 +208,9 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
                 opportunities.push(opportunity);
               }
             } catch (error) {
-              log.warn(`Failed to extract opportunity from card ${index} in stage "${stageName}"`, { error: describeError(error) });
+              log.warn(`Failed to extract opportunity from card ${index} in stage "${stageName}"`, {
+                error: describeError(error),
+              });
             }
           });
         } catch (error) {
@@ -232,7 +222,6 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
     }
 
     log.debug('No list or kanban view detected');
-
   } catch (error) {
     log.error('Error in opportunity extraction', { error: describeError(error) });
   }

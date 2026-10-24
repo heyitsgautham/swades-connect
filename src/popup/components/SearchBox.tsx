@@ -7,12 +7,14 @@ interface SearchBoxProps {
 
 function SearchBox({ placeholder, value, onChange, count }: SearchBoxProps) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      position: 'relative',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        position: 'relative',
+      }}
+    >
       <input
         type="text"
         placeholder={placeholder}
@@ -28,11 +30,13 @@ function SearchBox({ placeholder, value, onChange, count }: SearchBoxProps) {
           fontFamily: 'inherit',
         }}
       />
-      <span style={{
-        fontSize: '11px',
-        color: 'var(--color-text-secondary)',
-        whiteSpace: 'nowrap',
-      }}>
+      <span
+        style={{
+          fontSize: '11px',
+          color: 'var(--color-text-secondary)',
+          whiteSpace: 'nowrap',
+        }}
+      >
         {count} result{count !== 1 ? 's' : ''}
       </span>
       {value && (

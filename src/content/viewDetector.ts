@@ -13,11 +13,7 @@ const log = createLogger('view');
 export type OdooViewType = 'list' | 'kanban' | 'form' | 'activity' | 'unknown';
 
 // Data models we extract data from
-export type OdooDataModel =
-  | 'res.partner'
-  | 'crm.lead'
-  | 'mail.activity'
-  | 'unknown';
+export type OdooDataModel = 'res.partner' | 'crm.lead' | 'mail.activity' | 'unknown';
 
 /**
  * Odoo session info interface (partial - only what we need)
@@ -100,11 +96,7 @@ export function detectDataModel(): OdooDataModel {
 
   // Strategy 2: Check URL path patterns
   // Contacts (res.partner)
-  if (
-    url.includes('/contacts/') ||
-    url.includes('model=res.partner') ||
-    pathname.includes('/partners/')
-  ) {
+  if (url.includes('/contacts/') || url.includes('model=res.partner') || pathname.includes('/partners/')) {
     return 'res.partner';
   }
 
@@ -119,11 +111,7 @@ export function detectDataModel(): OdooDataModel {
   }
 
   // Activities (mail.activity)
-  if (
-    url.includes('/activities/') ||
-    url.includes('model=mail.activity') ||
-    pathname.includes('/mail/activity/')
-  ) {
+  if (url.includes('/activities/') || url.includes('model=mail.activity') || pathname.includes('/mail/activity/')) {
     return 'mail.activity';
   }
 
@@ -138,11 +126,7 @@ export function detectDataModel(): OdooDataModel {
   if (title.includes('customer') || title.includes('contact')) {
     return 'res.partner';
   }
-  if (
-    title.includes('pipeline') ||
-    title.includes('lead') ||
-    title.includes('opportunit')
-  ) {
+  if (title.includes('pipeline') || title.includes('lead') || title.includes('opportunit')) {
     return 'crm.lead';
   }
   if (title.includes('activit')) {
@@ -219,9 +203,7 @@ export function getOdooVersion(): string {
 
   // Strategy 3: Try to extract from script content
   try {
-    const scripts = document.querySelectorAll(
-      'script:not([src])'
-    ) as NodeListOf<HTMLScriptElement>;
+    const scripts = document.querySelectorAll('script:not([src])') as NodeListOf<HTMLScriptElement>;
     for (const script of scripts) {
       const content = script.textContent || '';
       // Look for server_version in the inline script
@@ -279,10 +261,7 @@ export function isOdooPage(): boolean {
   }
 
   // Check for common Odoo elements
-  if (
-    document.querySelector('.o_main_navbar') ||
-    document.querySelector('.o_action_manager')
-  ) {
+  if (document.querySelector('.o_main_navbar') || document.querySelector('.o_action_manager')) {
     return true;
   }
 

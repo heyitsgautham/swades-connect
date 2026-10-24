@@ -34,7 +34,10 @@ describe('opportunity id cache', () => {
   });
 
   it('keeps the first id seen for a name', () => {
-    populateOpportunityIdCache([{ id: 3, name: 'Dup' }, { id: 4, name: 'dup' }]);
+    populateOpportunityIdCache([
+      { id: 3, name: 'Dup' },
+      { id: 4, name: 'dup' },
+    ]);
     setOpportunityId('DUP', 5);
     expect(lookupOpportunityId('dup')).toBe(3);
     expect(getOpportunityIdCacheSize()).toBe(1);
@@ -77,7 +80,10 @@ describe('activity id cache', () => {
 
   it('accumulates full records across pages for the session', () => {
     populateActivityIdCache([{ id: 21, summary: 'a' }]);
-    populateActivityIdCache([{ id: 22, summary: 'b' }, { id: 21, summary: 'a, edited' }]);
+    populateActivityIdCache([
+      { id: 22, summary: 'b' },
+      { id: 21, summary: 'a, edited' },
+    ]);
 
     const records = getAllActivityRecords();
     expect([...records.keys()]).toEqual(expect.arrayContaining([21, 22]));

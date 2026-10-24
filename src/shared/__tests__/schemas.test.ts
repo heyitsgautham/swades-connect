@@ -50,7 +50,10 @@ describe('parseBackgroundMessage', () => {
     const wrongShape = { action: 'ODOO_RPC_UPSERT', data: { type: 'contacts', records: [makeOpportunity()] } };
     expect(parseBackgroundMessage(wrongShape)).toMatchObject({ ok: false, reason: 'invalid' });
 
-    const badActivity = { action: 'ODOO_RPC_UPSERT', data: { type: 'activities', records: [{ ...makeActivity(), type: 'fax' }] } };
+    const badActivity = {
+      action: 'ODOO_RPC_UPSERT',
+      data: { type: 'activities', records: [{ ...makeActivity(), type: 'fax' }] },
+    };
     expect(parseBackgroundMessage(badActivity)).toMatchObject({ ok: false, reason: 'invalid' });
   });
 

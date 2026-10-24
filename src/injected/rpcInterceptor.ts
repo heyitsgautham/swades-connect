@@ -15,7 +15,8 @@ const log = createLogger('interceptor');
 // Type Definitions
 // ============================================================================
 
-export type OdooRpcMethod = 'create' | 'write' | 'unlink' | 'web_save' | 'action_done' | 'name_create' | 'web_search_read' | 'web_read_group';
+export type OdooRpcMethod =
+  'create' | 'write' | 'unlink' | 'web_save' | 'action_done' | 'name_create' | 'web_search_read' | 'web_read_group';
 
 export interface OdooRpcPayload {
   model: string;
@@ -41,7 +42,16 @@ export type RelevantModel = (typeof RELEVANT_MODELS)[number];
 // name_create is used for quick contact creation (e.g., from opportunity forms)
 // web_search_read and web_read_group are used to capture real Odoo IDs when loading list/kanban views
 // web_read_group is used by kanban views with grouping (like opportunities by stage)
-export const INTERCEPTED_METHODS: OdooRpcMethod[] = ['create', 'write', 'unlink', 'web_save', 'action_done', 'name_create', 'web_search_read', 'web_read_group'];
+export const INTERCEPTED_METHODS: OdooRpcMethod[] = [
+  'create',
+  'write',
+  'unlink',
+  'web_save',
+  'action_done',
+  'name_create',
+  'web_search_read',
+  'web_read_group',
+];
 
 // ============================================================================
 // Helper Functions
@@ -83,11 +93,7 @@ export function isOdooRpcSignal(data: unknown): data is OdooRpcSignal {
     return false;
   }
   const obj = data as Record<string, unknown>;
-  return (
-    obj.source === 'odoo-rpc-interceptor' &&
-    typeof obj.payload === 'object' &&
-    obj.payload !== null
-  );
+  return obj.source === 'odoo-rpc-interceptor' && typeof obj.payload === 'object' && obj.payload !== null;
 }
 
 /**
@@ -101,9 +107,7 @@ export function isRelevantModel(model: string): model is RelevantModel {
  * Setup a listener for RPC signals in the content script.
  * Returns a cleanup function to remove the listener.
  */
-export function setupRpcSignalListener(
-  callback: (signal: OdooRpcSignal) => void
-): () => void {
+export function setupRpcSignalListener(callback: (signal: OdooRpcSignal) => void): () => void {
   const handler = (event: MessageEvent) => {
     // Only accept messages from the same window
     if (event.source !== window) {

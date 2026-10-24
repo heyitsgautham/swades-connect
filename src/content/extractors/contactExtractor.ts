@@ -107,9 +107,7 @@ function extractContactFromRow(row: HTMLElement, index: number): Contact | null 
     const phone = getTooltipOrText(phoneCell);
 
     // Extract company - try parent_id first, then company_name, then use parsed company from complete_name
-    const companyCell =
-      row.querySelector('td[name="parent_id"]') ||
-      row.querySelector('td[name="company_name"]');
+    const companyCell = row.querySelector('td[name="parent_id"]') || row.querySelector('td[name="company_name"]');
     const explicitCompany = getTooltipOrText(companyCell);
     // Use explicit company field if available, otherwise use parsed company from complete_name
     const company = explicitCompany || parsedName.company;
@@ -179,7 +177,7 @@ function extractContactFromKanbanCard(card: HTMLElement, index: number): Contact
       name: parsedName.name,
       email: email || '',
       phone: phone || '',
-      company: company || '', 
+      company: company || '',
       country: contactLocation || '',
     };
   } catch (error) {
@@ -216,9 +214,8 @@ function extractFieldByIcon(container: HTMLElement, iconClass: string): string {
   try {
     // Find the icon element - use robust selector that matches Odoo's class structure
     // Odoo uses: <i class="fa fa-fw me-1 fa-envelope text-primary" />
-    const icon = container.querySelector(`i.fa.${iconClass}`) ||
-                 container.querySelector(`i[class*="${iconClass}"]`);
-    
+    const icon = container.querySelector(`i.fa.${iconClass}`) || container.querySelector(`i[class*="${iconClass}"]`);
+
     if (!icon) {
       return '';
     }
@@ -238,7 +235,7 @@ function extractFieldByIcon(container: HTMLElement, iconClass: string): string {
       // Collect all sibling spans after the icon
       const siblingSpans: string[] = [];
       let node = icon.nextSibling;
-      
+
       while (node) {
         if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === 'SPAN') {
           const spanText = (node as HTMLElement).textContent?.trim() || '';
@@ -248,7 +245,7 @@ function extractFieldByIcon(container: HTMLElement, iconClass: string): string {
         }
         node = node.nextSibling;
       }
-      
+
       if (siblingSpans.length > 0) {
         return siblingSpans.join(' ');
       }

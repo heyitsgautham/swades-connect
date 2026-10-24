@@ -15,9 +15,7 @@ function ExtractButton({ isLoading, onClick }: ExtractButtonProps) {
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        background: isLoading 
-          ? '#6b7280' 
-          : 'linear-gradient(to right, #8B2E2E, #A03535)',
+        background: isLoading ? '#6b7280' : 'linear-gradient(to right, #8B2E2E, #A03535)',
         color: 'white',
         padding: '8px 16px',
         border: 'none',
@@ -37,7 +35,9 @@ function ExtractButton({ isLoading, onClick }: ExtractButtonProps) {
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'scale(1)';
-        e.currentTarget.style.boxShadow = isLoading ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+        e.currentTarget.style.boxShadow = isLoading
+          ? 'none'
+          : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
       }}
       onMouseDown={(e) => {
         if (!isLoading) {

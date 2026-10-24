@@ -15,7 +15,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
   useEffect(() => {
     // Trigger enter animation
     const enterTimer = setTimeout(() => setIsVisible(true), 10);
-    
+
     // Auto-dismiss after 3 seconds
     const dismissTimer = setTimeout(() => {
       setIsLeaving(true);
@@ -127,7 +127,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
   const showToast = useCallback(({ type, message }: ShowToastOptions) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newToast: ToastMessage = { id, type, message };
-    
+
     setToasts((prev) => [...prev, newToast]);
   }, []);
 

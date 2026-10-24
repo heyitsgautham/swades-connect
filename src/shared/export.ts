@@ -31,7 +31,7 @@ export function exportCSV(type: ExportType, data: Contact[] | Opportunity[] | Ac
           phone: c.phone,
           company: c.company,
           country: c.country,
-        }))
+        })),
       );
     case 'opportunities':
       return toCSV(
@@ -42,7 +42,7 @@ export function exportCSV(type: ExportType, data: Contact[] | Opportunity[] | Ac
           revenue: `₹${o.revenue.toLocaleString('en-IN')}`,
           probability: o.probability,
           closeDate: o.closeDate,
-        }))
+        })),
       );
     case 'activities':
       return toCSV(
@@ -53,7 +53,7 @@ export function exportCSV(type: ExportType, data: Contact[] | Opportunity[] | Ac
           status: a.status,
           dueDate: a.dueDate,
           assignedTo: a.assignedTo,
-        }))
+        })),
       );
     default:
       return '';
@@ -67,7 +67,7 @@ export function exportJSON(_type: ExportType, data: Contact[] | Opportunity[] | 
 export function exportData(
   type: ExportType,
   data: Contact[] | Opportunity[] | Activity[],
-  format: ExportFormat
+  format: ExportFormat,
 ): string {
   return format === 'csv' ? exportCSV(type, data) : exportJSON(type, data);
 }

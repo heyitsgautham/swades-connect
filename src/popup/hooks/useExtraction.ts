@@ -37,10 +37,10 @@ export function useExtraction() {
 
       if (response.success) {
         const recordsExtracted = (response.data as { recordsExtracted?: number })?.recordsExtracted || 0;
-        setState({ 
-          isExtracting: false, 
-          error: null, 
-          success: true, 
+        setState({
+          isExtracting: false,
+          error: null,
+          success: true,
           recordsExtracted,
         });
       } else {

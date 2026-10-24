@@ -130,11 +130,7 @@ function describeIssues(error: z.ZodError): string[] {
   return error.issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`);
 }
 
-function parseWith<T>(
-  schema: z.ZodType<T>,
-  actions: readonly string[],
-  raw: unknown,
-): ParseResult<T> {
+function parseWith<T>(schema: z.ZodType<T>, actions: readonly string[], raw: unknown): ParseResult<T> {
   const action = actionOf(raw);
   if (typeof action !== 'string' || !actions.includes(action)) {
     return { ok: false, reason: 'unknown-action', action };

@@ -10,7 +10,9 @@ describe('exportCSV', () => {
   });
 
   it('quotes commas, quotes and newlines', () => {
-    const csv = exportCSV('contacts', [makeContact({ name: 'Testwell, Mira', company: 'The "Acme" Co', country: 'Line\nBreak' })]);
+    const csv = exportCSV('contacts', [
+      makeContact({ name: 'Testwell, Mira', company: 'The "Acme" Co', country: 'Line\nBreak' }),
+    ]);
     expect(csv.split('\n').slice(1).join('\n')).toBe(
       'contact_101,"Testwell, Mira",mira.testwell@example.com,+1 555 0101,"The ""Acme"" Co","Line\nBreak"',
     );

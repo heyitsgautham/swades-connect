@@ -43,7 +43,7 @@ export function populateOpportunityIdCache(records: Array<Record<string, unknown
   for (const record of records) {
     const id = record.id as number | undefined;
     const name = record.name as string | undefined;
-    
+
     if (id && name) {
       const normalizedName = normalizeOpportunityName(name);
       if (!opportunityIdCache.has(normalizedName)) {
@@ -52,7 +52,7 @@ export function populateOpportunityIdCache(records: Array<Record<string, unknown
       }
     }
   }
-  
+
   if (added > 0) {
     log.debug(`Cached ${added} opportunity IDs (total: ${opportunityIdCache.size})`);
   }
@@ -76,7 +76,7 @@ export function setOpportunityId(name: string, id: number): void {
  * Initialize the opportunity ID cache from chrome.storage.local.
  * Reads existing opportunities that have real IDs (format `opp_\d+`)
  * and adds them to the cache.
- * 
+ *
  * This addresses the timing issue where web_search_read happens
  * before the RPC interceptor is installed.
  */
@@ -84,7 +84,7 @@ export async function initializeOpportunityIdCacheFromStorage(): Promise<void> {
   try {
     const result = await chrome.storage.local.get('odoo_data');
     const odooData = result.odoo_data as { opportunities?: Array<{ id: string; name: string }> } | undefined;
-    
+
     if (!odooData?.opportunities || !Array.isArray(odooData.opportunities)) {
       log.debug('No opportunities in storage to initialize cache');
       return;
@@ -97,7 +97,7 @@ export async function initializeOpportunityIdCacheFromStorage(): Promise<void> {
       if (match && opp.name) {
         const realId = parseInt(match[1], 10);
         const normalizedName = normalizeOpportunityName(opp.name);
-        
+
         if (!opportunityIdCache.has(normalizedName)) {
           opportunityIdCache.set(normalizedName, realId);
           added++;
@@ -204,7 +204,7 @@ export function lookupActivityId(rowIndex: number): number | null {
 export function populateActivityIdCache(records: Array<Record<string, unknown>>): void {
   // Replace cache with new page's IDs
   activityIdArray = [];
-  
+
   for (const record of records) {
     const id = record.id as number | undefined;
     if (id) {
@@ -215,8 +215,6 @@ export function populateActivityIdCache(records: Array<Record<string, unknown>>)
       allActivityRecords.set(id, record);
     }
   }
-  
-
 }
 
 /**
@@ -258,7 +256,7 @@ export function clearActivityIdCache(): void {
  * Initialize the activity ID cache from chrome.storage.local.
  * For the row-index based approach, this is a no-op since we rely on
  * RPC interception to populate the cache in real-time.
- * 
+ *
  * This function is kept for API compatibility.
  */
 export async function initializeActivityIdCacheFromStorage(): Promise<void> {

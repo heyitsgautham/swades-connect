@@ -15,11 +15,13 @@ function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   ];
 
   return (
-    <nav style={{
-      display: 'flex',
-      borderBottom: '2px solid var(--color-border)',
-      background: '#fafbfc',
-    }}>
+    <nav
+      style={{
+        display: 'flex',
+        borderBottom: '2px solid var(--color-border)',
+        background: '#fafbfc',
+      }}
+    >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (

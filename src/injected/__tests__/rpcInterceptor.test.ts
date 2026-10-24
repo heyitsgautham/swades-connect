@@ -1,10 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
-import { injectRpcInterceptor, isOdooRpcSignal, isRelevantModel, setupRpcSignalListener, type OdooRpcSignal } from '../rpcInterceptor';
+import {
+  injectRpcInterceptor,
+  isOdooRpcSignal,
+  isRelevantModel,
+  setupRpcSignalListener,
+  type OdooRpcSignal,
+} from '../rpcInterceptor';
 import { chromeMock } from '../../test/chromeMock';
 
 const signal: OdooRpcSignal = {
   source: 'odoo-rpc-interceptor',
-  payload: { model: 'crm.lead', method: 'unlink', args: [[1]], result: true, url: '/web/dataset/call_kw/crm.lead/unlink', ts: 1 },
+  payload: {
+    model: 'crm.lead',
+    method: 'unlink',
+    args: [[1]],
+    result: true,
+    url: '/web/dataset/call_kw/crm.lead/unlink',
+    ts: 1,
+  },
 };
 
 describe('isOdooRpcSignal', () => {

@@ -27,7 +27,10 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
     const mime = format === 'csv' ? 'text/csv' : 'application/json';
     const ext = format === 'csv' ? 'csv' : 'json';
     downloadFile(`swades-opportunities-${Date.now()}.${ext}`, content, mime);
-    showToast({ type: 'success', message: `Exported ${opportunities.length} opportunities as ${format.toUpperCase()}` });
+    showToast({
+      type: 'success',
+      message: `Exported ${opportunities.length} opportunities as ${format.toUpperCase()}`,
+    });
   };
 
   const uniqueStages = useMemo(() => {
@@ -50,9 +53,7 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
 
     return opportunities.filter((opp) => {
       const query = searchQuery.toLowerCase();
-      const matchesSearch =
-        opp.name.toLowerCase().includes(query) ||
-        opp.stage.toLowerCase().includes(query);
+      const matchesSearch = opp.name.toLowerCase().includes(query) || opp.stage.toLowerCase().includes(query);
       const matchesStage = !stageFilter || opp.stage === stageFilter;
       const matchesProbMin = minProb === null || opp.probability >= minProb;
       const matchesProbMax = maxProb === null || opp.probability <= maxProb;
@@ -79,16 +80,20 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
         count={sortedOpportunities.length}
       />
 
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-      }}>
-        <label style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'var(--color-text-secondary)',
-        }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}
+      >
+        <label
+          style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--color-text-secondary)',
+          }}
+        >
           Stage:
         </label>
         <select
@@ -106,22 +111,28 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
         >
           <option value="">All Stages</option>
           {uniqueStages.map((stage) => (
-            <option key={stage} value={stage}>{stage}</option>
+            <option key={stage} value={stage}>
+              {stage}
+            </option>
           ))}
         </select>
       </div>
 
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-      }}>
-        <label style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'var(--color-text-secondary)',
-          whiteSpace: 'nowrap',
-        }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}
+      >
+        <label
+          style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--color-text-secondary)',
+            whiteSpace: 'nowrap',
+          }}
+        >
           Probability:
         </label>
         <input
@@ -163,11 +174,13 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
 
       {/* Export Buttons */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <label style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'var(--color-text-secondary)',
-        }}>
+        <label
+          style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--color-text-secondary)',
+          }}
+        >
           Export:
         </label>
         <button
@@ -238,10 +251,10 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
         >
           <Download size={14} /> JSON
         </button>
-        
+
         {/* Spacer to push Delete All to the right */}
         <div style={{ flex: 1 }} />
-        
+
         <button
           onClick={onDeleteAll}
           disabled={opportunities.length === 0}
@@ -249,9 +262,7 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: opportunities.length === 0 
-              ? '#6b7280' 
-              : 'linear-gradient(to right, #8B2E2E, #A03535)',
+            background: opportunities.length === 0 ? '#6b7280' : 'linear-gradient(to right, #8B2E2E, #A03535)',
             color: 'white',
             padding: '8px 16px',
             border: 'none',
@@ -259,19 +270,26 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
             fontSize: '13px',
             fontWeight: 600,
             cursor: opportunities.length === 0 ? 'not-allowed' : 'pointer',
-            boxShadow: opportunities.length === 0 ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            boxShadow:
+              opportunities.length === 0
+                ? 'none'
+                : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
             transition: 'all 0.2s ease',
             transform: 'scale(1)',
           }}
           onMouseEnter={(e) => {
             if (opportunities.length > 0) {
               e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+              e.currentTarget.style.boxShadow =
+                '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
             }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = opportunities.length === 0 ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+            e.currentTarget.style.boxShadow =
+              opportunities.length === 0
+                ? 'none'
+                : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
           }}
           onMouseDown={(e) => {
             if (opportunities.length > 0) {
@@ -289,16 +307,20 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
       </div>
 
       {sortedOpportunities.length === 0 ? (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '48px 16px',
-          color: 'var(--color-text-secondary)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '48px 16px',
+            color: 'var(--color-text-secondary)',
+          }}
+        >
           <Briefcase size={48} strokeWidth={1.5} style={{ color: '#d1d5db', marginBottom: '12px' }} />
-          <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '4px' }}>No opportunities found</p>
+          <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '4px' }}>
+            No opportunities found
+          </p>
           <p style={{ fontSize: '12px' }}>
             {opportunities.length === 0
               ? 'Click "Extract Now" to fetch opportunities from Odoo'
@@ -310,7 +332,13 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
           columns={[
             { key: 'name', label: 'Name', sortable: true, width: '35%' },
             { key: 'stage', label: 'Stage', sortable: true, width: '20%' },
-            { key: 'revenue', label: 'Revenue', sortable: true, width: '20%', format: (v) => `₹${v?.toLocaleString('en-IN') ?? 0}` },
+            {
+              key: 'revenue',
+              label: 'Revenue',
+              sortable: true,
+              width: '20%',
+              format: (v) => `₹${v?.toLocaleString('en-IN') ?? 0}`,
+            },
             { key: 'probability', label: 'Prob.', sortable: true, width: '15%', format: (v) => `${v ?? 0}%` },
           ]}
           data={sortedOpportunities}

@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  createLogger,
-  describeError,
-  getLogLevel,
-  initLogLevelFromStorage,
-  isLogLevel,
-  setLogLevel,
-} from '../logger';
+import { createLogger, describeError, getLogLevel, initLogLevelFromStorage, isLogLevel, setLogLevel } from '../logger';
 import { chromeMock } from '../../test/chromeMock';
 
 describe('logger', () => {

@@ -41,7 +41,12 @@ function mountPager(total: number, pageSize: number, startPage = 0) {
 const rowsOnPage = () => Array.from(document.querySelectorAll('tr.o_data_row'), (row) => row.textContent ?? '');
 
 async function run(config: Parameters<typeof extractWithPagination>[1]) {
-  const pending = extractWithPagination(rowsOnPage, { delayBetweenPages: 10, waitForRpcCache: false, forceStableSort: false, ...config });
+  const pending = extractWithPagination(rowsOnPage, {
+    delayBetweenPages: 10,
+    waitForRpcCache: false,
+    forceStableSort: false,
+    ...config,
+  });
   await vi.advanceTimersByTimeAsync(10_000);
   return pending;
 }
@@ -105,7 +110,10 @@ describe('extractWithPagination', () => {
 
   it('clicks a sortable column once to force a stable order', async () => {
     mountPager(2, 2);
-    document.body.insertAdjacentHTML('afterbegin', '<table><thead><tr><th class="o_column_sortable">Summary</th></tr></thead></table>');
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<table><thead><tr><th class="o_column_sortable">Summary</th></tr></thead></table>',
+    );
     const header = document.querySelector('th.o_column_sortable') as HTMLElement;
     const click = vi.fn();
     header.addEventListener('click', click);

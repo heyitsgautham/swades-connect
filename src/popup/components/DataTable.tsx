@@ -35,22 +35,28 @@ interface DataTableProps {
 
 function DataTable({ columns, data, onDelete, sortKey, sortDirection, onSort }: DataTableProps) {
   return (
-    <div style={{
-      overflow: 'hidden',
-      border: '1px solid var(--color-border)',
-      borderRadius: '0px',
-    }}>
-      <table style={{
-        width: '100%',
-        borderCollapse: 'collapse',
-        fontSize: '12px',
-        tableLayout: 'fixed',
-      }}>
+    <div
+      style={{
+        overflow: 'hidden',
+        border: '1px solid var(--color-border)',
+        borderRadius: '0px',
+      }}
+    >
+      <table
+        style={{
+          width: '100%',
+          borderCollapse: 'collapse',
+          fontSize: '12px',
+          tableLayout: 'fixed',
+        }}
+      >
         <thead>
-          <tr style={{
-            background: 'var(--color-accent)',
-            borderBottom: '2px solid var(--color-border)',
-          }}>
+          <tr
+            style={{
+              background: 'var(--color-accent)',
+              borderBottom: '2px solid var(--color-border)',
+            }}
+          >
             {columns.map((col) => {
               const isSortable = col.sortable !== false && onSort;
               const isActive = sortKey === col.key;
@@ -82,31 +88,35 @@ function DataTable({ columns, data, onDelete, sortKey, sortDirection, onSort }: 
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     {col.label}
-                    {isSortable && isActive && (
-                      sortDirection === 'asc' 
-                        ? <ArrowUp size={12} style={{ color: 'var(--color-primary)' }} />
-                        : <ArrowDown size={12} style={{ color: 'var(--color-primary)' }} />
-                    )}
+                    {isSortable &&
+                      isActive &&
+                      (sortDirection === 'asc' ? (
+                        <ArrowUp size={12} style={{ color: 'var(--color-primary)' }} />
+                      ) : (
+                        <ArrowDown size={12} style={{ color: 'var(--color-primary)' }} />
+                      ))}
                   </span>
                 </th>
               );
             })}
-            <th style={{
-              padding: '8px',
-              textAlign: 'center',
-              fontWeight: 600,
-              color: 'var(--color-text)',
-              width: '40px',
-            }}>
+            <th
+              style={{
+                padding: '8px',
+                textAlign: 'center',
+                fontWeight: 600,
+                color: 'var(--color-text)',
+                width: '40px',
+              }}
+            >
               Action
             </th>
           </tr>
         </thead>
         <tbody>
           {data.map((row, index) => (
-            <tr 
-              key={row.id} 
-              style={{ 
+            <tr
+              key={row.id}
+              style={{
                 borderBottom: '1px solid var(--color-border)',
                 background: index % 2 === 1 ? 'rgba(255, 244, 219, 0.3)' : 'transparent',
                 transition: 'background 0.15s ease',
@@ -121,20 +131,20 @@ function DataTable({ columns, data, onDelete, sortKey, sortDirection, onSort }: 
               {columns.map((col) => {
                 const cellValue = getRowValue(row, col.key);
                 return (
-                <td
-                  key={`${row.id}-${col.key}`}
-                  title={String(cellValue ?? '')}
-                  style={{
-                    padding: '12px 8px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    maxWidth: '120px',
-                  }}
-                >
-                  {col.format ? col.format(cellValue) : (cellValue ?? '')}
-                </td>
-              );
+                  <td
+                    key={`${row.id}-${col.key}`}
+                    title={String(cellValue ?? '')}
+                    style={{
+                      padding: '12px 8px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '120px',
+                    }}
+                  >
+                    {col.format ? col.format(cellValue) : (cellValue ?? '')}
+                  </td>
+                );
               })}
               <td style={{ textAlign: 'center', padding: '8px' }}>
                 <button

@@ -17,7 +17,7 @@ export class DOMWatcher {
     this.config = {
       debounceMs: 500,
       targetSelectors: ['.o_content', '.o_list_view', '.o_kanban_view', '.o_form_view'],
-      ...config
+      ...config,
     };
   }
 
@@ -33,21 +33,23 @@ export class DOMWatcher {
         }
 
         const target = mutation.target as HTMLElement;
-        
+
         // Only care about changes inside data rows/records
-        const isDataRow = 
+        const isDataRow =
           target.closest('.o_data_row') || // List view row
           target.closest('.o_kanban_record') || // Kanban card
           target.matches('.o_data_row') ||
           target.matches('.o_kanban_record') ||
           // Check if added/removed nodes are data rows
-          Array.from(mutation.addedNodes).some(node => 
-            (node as HTMLElement).classList?.contains('o_data_row') ||
-            (node as HTMLElement).classList?.contains('o_kanban_record')
+          Array.from(mutation.addedNodes).some(
+            (node) =>
+              (node as HTMLElement).classList?.contains('o_data_row') ||
+              (node as HTMLElement).classList?.contains('o_kanban_record'),
           ) ||
-          Array.from(mutation.removedNodes).some(node => 
-            (node as HTMLElement).classList?.contains('o_data_row') ||
-            (node as HTMLElement).classList?.contains('o_kanban_record')
+          Array.from(mutation.removedNodes).some(
+            (node) =>
+              (node as HTMLElement).classList?.contains('o_data_row') ||
+              (node as HTMLElement).classList?.contains('o_kanban_record'),
           );
 
         // Ignore changes to pager, filters, search box, view switcher
@@ -71,10 +73,10 @@ export class DOMWatcher {
 
     // Observe the entire document with optimized config
     this.observer.observe(document.body, {
-      childList: true,      // Watch for added/removed nodes
-      subtree: true,        // Watch entire tree
-      attributes: false,    // Ignore attribute changes for performance
-      characterData: false  // Ignore text changes
+      childList: true, // Watch for added/removed nodes
+      subtree: true, // Watch entire tree
+      attributes: false, // Ignore attribute changes for performance
+      characterData: false, // Ignore text changes
     });
 
     log.debug('DOM Watcher started');
@@ -86,7 +88,7 @@ export class DOMWatcher {
       this.observer = null;
       log.debug('DOM Watcher stopped');
     }
-    
+
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;

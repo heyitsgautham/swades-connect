@@ -58,7 +58,7 @@ describe('Storage utilities', () => {
 
       expect(deduplicated).toHaveLength(3);
       // Map preserves insertion order, but last value wins
-      const ids = deduplicated.map(r => r.id);
+      const ids = deduplicated.map((r) => r.id);
       expect(ids).toContain('1');
       expect(ids).toContain('2');
       expect(ids).toContain('3');
@@ -100,7 +100,11 @@ describe('storage against chrome.storage.local', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-20T10:00:00Z'));
     await saveData([makeContact({ id: 'contact_1', phone: 'old' })], [makeOpportunity()], []);
-    await saveData([makeContact({ id: 'contact_1', phone: 'new' }), makeContact({ id: 'contact_2' })], [], [makeActivity()]);
+    await saveData(
+      [makeContact({ id: 'contact_1', phone: 'new' }), makeContact({ id: 'contact_2' })],
+      [],
+      [makeActivity()],
+    );
 
     const data = stored();
     expect(data.contacts.map((c) => [c.id, c.phone])).toEqual([
@@ -165,7 +169,10 @@ describe('storage against chrome.storage.local', () => {
       await acquireLock('someone-else');
       const pending = upsertRecords('contacts', [makeContact()]);
       const assertion = expect(pending).rejects.toSatisfy(
-        (error) => error instanceof StorageError && /Failed to acquire lock/.test(error.message) && error.context.type === 'contacts',
+        (error) =>
+          error instanceof StorageError &&
+          /Failed to acquire lock/.test(error.message) &&
+          error.context.type === 'contacts',
       );
       await vi.advanceTimersByTimeAsync(5_100);
       await assertion;
@@ -187,7 +194,9 @@ describe('storage against chrome.storage.local', () => {
 
 describe('mergeNonEmpty', () => {
   it('lets incoming values win except empty ones', () => {
-    expect(mergeNonEmpty(makeContact({ email: 'keep@example.com', phone: '1' }), makeContact({ email: '', phone: '2' }))).toMatchObject({
+    expect(
+      mergeNonEmpty(makeContact({ email: 'keep@example.com', phone: '1' }), makeContact({ email: '', phone: '2' })),
+    ).toMatchObject({
       email: 'keep@example.com',
       phone: '2',
     });
@@ -216,12 +225,18 @@ describe('upsertUpgradingHashIds', () => {
 
   it('upgrades a hash-id activity by summary', async () => {
     await saveData([], [], [makeActivity({ id: 'act_k2j9', summary: 'Follow up on quote' })]);
-    await upsertUpgradingHashIds('activities', [makeActivity({ id: 'act_10', summary: 'Follow up on quote', status: 'done' })]);
+    await upsertUpgradingHashIds('activities', [
+      makeActivity({ id: 'act_10', summary: 'Follow up on quote', status: 'done' }),
+    ]);
     expect(stored().activities).toEqual([expect.objectContaining({ id: 'act_10', status: 'done' })]);
   });
 
   it('matches by id first', async () => {
-    await saveData([], [makeOpportunity({ id: 'opp_24', name: 'Old name' }), makeOpportunity({ id: 'opp_hash', name: 'New name' })], []);
+    await saveData(
+      [],
+      [makeOpportunity({ id: 'opp_24', name: 'Old name' }), makeOpportunity({ id: 'opp_hash', name: 'New name' })],
+      [],
+    );
     await upsertUpgradingHashIds('opportunities', [makeOpportunity({ id: 'opp_24', name: 'New name' })]);
     expect(stored().opportunities.map((o) => [o.id, o.name])).toEqual([
       ['opp_24', 'New name'],
@@ -237,7 +252,10 @@ describe('upsertUpgradingHashIds', () => {
   });
 
   it('adds records with no match', async () => {
-    const result = await upsertUpgradingHashIds('activities', [makeActivity({ id: 'act_1' }), makeActivity({ id: 'act_2', summary: 'Other' })]);
+    const result = await upsertUpgradingHashIds('activities', [
+      makeActivity({ id: 'act_1' }),
+      makeActivity({ id: 'act_2', summary: 'Other' }),
+    ]);
     expect(result).toEqual({ added: 2, updated: 0 });
   });
 

@@ -75,7 +75,9 @@ describe('convertToContact', () => {
   });
 
   it('prefers company_name, then parent_id, then parent_name', () => {
-    expect(convertToContact({ id: 1, name: 'A', company_name: 'Direct', parent_id: [2, 'Parent'] }).company).toBe('Direct');
+    expect(convertToContact({ id: 1, name: 'A', company_name: 'Direct', parent_id: [2, 'Parent'] }).company).toBe(
+      'Direct',
+    );
     expect(convertToContact({ id: 1, name: 'A', parent_name: 'By name' }).company).toBe('By name');
   });
 
@@ -156,7 +158,13 @@ describe('convertToActivity', () => {
 
   it('prefers activity_user_id from the schedule wizard and falls back to note', () => {
     expect(
-      convertToActivity({ id: 1, summary: false, note: 'From note', activity_user_id: [5, 'Pat Example'], user_id: [6, 'Other'] }),
+      convertToActivity({
+        id: 1,
+        summary: false,
+        note: 'From note',
+        activity_user_id: [5, 'Pat Example'],
+        user_id: [6, 'Other'],
+      }),
     ).toMatchObject({ summary: 'From note', assignedTo: 'Pat Example' });
   });
 
@@ -183,7 +191,11 @@ describe('RPC result unpacking', () => {
   it('recordsFromReadGroup flattens every group', () => {
     expect(
       recordsFromReadGroup({
-        groups: [{ stage_id: [1, 'New'], __records: [{ id: 1 }] }, { stage_id: [2, 'Won'], __records: [{ id: 2 }, { id: 3 }] }, { stage_id: [3, 'Lost'] }],
+        groups: [
+          { stage_id: [1, 'New'], __records: [{ id: 1 }] },
+          { stage_id: [2, 'Won'], __records: [{ id: 2 }, { id: 3 }] },
+          { stage_id: [3, 'Lost'] },
+        ],
       }),
     ).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
     expect(recordsFromReadGroup({})).toEqual([]);

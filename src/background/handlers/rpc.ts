@@ -44,12 +44,19 @@ export async function handleRpcDelete(message: Of<'ODOO_RPC_DELETE'>): Promise<M
     const deleted = await deleteRecordsById(type, ids);
 
     if (deleted === 0) {
-      log.warn('No stored records matched an RPC delete; they may be stored under hash ids. Re-extract the page to clean up.', {
-        type,
-        ids,
-      });
+      log.warn(
+        'No stored records matched an RPC delete; they may be stored under hash ids. Re-extract the page to clean up.',
+        {
+          type,
+          ids,
+        },
+      );
     } else if (deleted < ids.length) {
-      log.warn('Partial RPC delete; some records may be stored under hash ids', { type, deleted, requested: ids.length });
+      log.warn('Partial RPC delete; some records may be stored under hash ids', {
+        type,
+        deleted,
+        requested: ids.length,
+      });
     } else {
       log.info('Deleted records from RPC', { type, deleted });
     }

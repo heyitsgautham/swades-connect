@@ -77,11 +77,13 @@ function ContactsTab({ contacts, onDelete, onDeleteAll }: ContactsTabProps) {
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <label style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'var(--color-text-secondary)',
-        }}>
+        <label
+          style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--color-text-secondary)',
+          }}
+        >
           Company:
         </label>
         <select
@@ -99,18 +101,22 @@ function ContactsTab({ contacts, onDelete, onDeleteAll }: ContactsTabProps) {
         >
           <option value="">All Companies</option>
           {uniqueCompanies.map((company) => (
-            <option key={company} value={company}>{company}</option>
+            <option key={company} value={company}>
+              {company}
+            </option>
           ))}
         </select>
       </div>
 
       {/* Export Buttons */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <label style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'var(--color-text-secondary)',
-        }}>
+        <label
+          style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--color-text-secondary)',
+          }}
+        >
           Export:
         </label>
         <button
@@ -181,10 +187,10 @@ function ContactsTab({ contacts, onDelete, onDeleteAll }: ContactsTabProps) {
         >
           <Download size={14} /> JSON
         </button>
-        
+
         {/* Spacer to push Delete All to the right */}
         <div style={{ flex: 1 }} />
-        
+
         <button
           onClick={onDeleteAll}
           disabled={contacts.length === 0}
@@ -192,9 +198,7 @@ function ContactsTab({ contacts, onDelete, onDeleteAll }: ContactsTabProps) {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: contacts.length === 0 
-              ? '#6b7280' 
-              : 'linear-gradient(to right, #8B2E2E, #A03535)',
+            background: contacts.length === 0 ? '#6b7280' : 'linear-gradient(to right, #8B2E2E, #A03535)',
             color: 'white',
             padding: '8px 16px',
             border: 'none',
@@ -202,19 +206,22 @@ function ContactsTab({ contacts, onDelete, onDeleteAll }: ContactsTabProps) {
             fontSize: '13px',
             fontWeight: 600,
             cursor: contacts.length === 0 ? 'not-allowed' : 'pointer',
-            boxShadow: contacts.length === 0 ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            boxShadow:
+              contacts.length === 0 ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
             transition: 'all 0.2s ease',
             transform: 'scale(1)',
           }}
           onMouseEnter={(e) => {
             if (contacts.length > 0) {
               e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+              e.currentTarget.style.boxShadow =
+                '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
             }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = contacts.length === 0 ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+            e.currentTarget.style.boxShadow =
+              contacts.length === 0 ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
           }}
           onMouseDown={(e) => {
             if (contacts.length > 0) {
@@ -232,16 +239,20 @@ function ContactsTab({ contacts, onDelete, onDeleteAll }: ContactsTabProps) {
       </div>
 
       {sortedContacts.length === 0 ? (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '48px 16px',
-          color: 'var(--color-text-secondary)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '48px 16px',
+            color: 'var(--color-text-secondary)',
+          }}
+        >
           <Users size={48} strokeWidth={1.5} style={{ color: '#d1d5db', marginBottom: '12px' }} />
-          <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '4px' }}>No contacts found</p>
+          <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '4px' }}>
+            No contacts found
+          </p>
           <p style={{ fontSize: '12px' }}>
             {contacts.length === 0
               ? 'Click "Extract Now" to fetch contacts from Odoo'

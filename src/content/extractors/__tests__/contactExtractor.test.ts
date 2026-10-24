@@ -6,13 +6,27 @@ describe('extractContacts from the list view', () => {
   it('reads every row and keys it by the res.partner id in the avatar url', () => {
     render(
       contactListRows([
-        { partnerId: 42, completeName: 'Mira Testwell', email: 'mira@example.com', phone: '+1 555 0142', company: 'Acme Widgets', country: 'Testland' },
+        {
+          partnerId: 42,
+          completeName: 'Mira Testwell',
+          email: 'mira@example.com',
+          phone: '+1 555 0142',
+          company: 'Acme Widgets',
+          country: 'Testland',
+        },
         { partnerId: 43, completeName: 'Omar Sample', email: 'omar@example.org', country: 'Mockovia' },
       ]),
     );
 
     expect(extractContacts()).toEqual([
-      { id: 'contact_42', name: 'Mira Testwell', email: 'mira@example.com', phone: '+1 555 0142', company: 'Acme Widgets', country: 'Testland' },
+      {
+        id: 'contact_42',
+        name: 'Mira Testwell',
+        email: 'mira@example.com',
+        phone: '+1 555 0142',
+        company: 'Acme Widgets',
+        country: 'Testland',
+      },
       { id: 'contact_43', name: 'Omar Sample', email: 'omar@example.org', phone: '', company: '', country: 'Mockovia' },
     ]);
   });
@@ -38,7 +52,12 @@ describe('extractContacts from the list view', () => {
   });
 
   it('skips rows without a name', () => {
-    render(contactListRows([{ partnerId: 1, completeName: '' }, { partnerId: 2, completeName: 'Kept' }]));
+    render(
+      contactListRows([
+        { partnerId: 1, completeName: '' },
+        { partnerId: 2, completeName: 'Kept' },
+      ]),
+    );
     expect(extractContacts().map((c) => c.id)).toEqual(['contact_2']);
   });
 });
@@ -52,7 +71,14 @@ describe('extractContacts from the kanban view', () => {
     );
 
     expect(extractContacts()).toEqual([
-      { id: 'contact_50', name: 'Mira Testwell', email: 'mira@example.com', phone: '+1 555 0150', company: '', country: 'Testland' },
+      {
+        id: 'contact_50',
+        name: 'Mira Testwell',
+        email: 'mira@example.com',
+        phone: '+1 555 0150',
+        company: '',
+        country: 'Testland',
+      },
     ]);
   });
 

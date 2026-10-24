@@ -78,11 +78,10 @@ export function useStorage(): UseStorageReturn {
     };
   }, []);
 
-  const deleteRecord = useCallback(async (type: 'contacts' | 'opportunities' | 'activities', id: string): Promise<DeleteResult> => {
-    return new Promise<DeleteResult>((resolve) => {
-      chrome.runtime.sendMessage(
-        { action: 'DELETE_RECORD', data: { type, id } },
-        (response) => {
+  const deleteRecord = useCallback(
+    async (type: 'contacts' | 'opportunities' | 'activities', id: string): Promise<DeleteResult> => {
+      return new Promise<DeleteResult>((resolve) => {
+        chrome.runtime.sendMessage({ action: 'DELETE_RECORD', data: { type, id } }, (response) => {
           if (chrome.runtime.lastError) {
             setError(chrome.runtime.lastError.message || 'Unknown error');
             resolve({ success: false, error: chrome.runtime.lastError.message });
@@ -96,38 +95,41 @@ export function useStorage(): UseStorageReturn {
             setError(errorMsg);
             resolve({ success: false, error: errorMsg });
           }
-        }
-      );
-    });
-  }, [fetchData]);
+        });
+      });
+    },
+    [fetchData],
+  );
 
   // Optimistic delete: immediately removes item from UI state and returns a rollback function
-  const optimisticDelete = useCallback((type: 'contacts' | 'opportunities' | 'activities', id: string): () => void => {
-    // Save current state for potential rollback
-    const previousData = data;
-    
-    // Immediately update UI state
-    setData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        [type]: prev[type].filter((item: Contact | Opportunity | Activity) => item.id !== id),
+  const optimisticDelete = useCallback(
+    (type: 'contacts' | 'opportunities' | 'activities', id: string): (() => void) => {
+      // Save current state for potential rollback
+      const previousData = data;
+
+      // Immediately update UI state
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          [type]: prev[type].filter((item: Contact | Opportunity | Activity) => item.id !== id),
+        };
+      });
+
+      // Return rollback function
+      return () => {
+        if (previousData) {
+          setData(previousData);
+        }
       };
-    });
+    },
+    [data],
+  );
 
-    // Return rollback function
-    return () => {
-      if (previousData) {
-        setData(previousData);
-      }
-    };
-  }, [data]);
-
-  const deleteAllRecords = useCallback(async (type: 'contacts' | 'opportunities' | 'activities'): Promise<DeleteResult> => {
-    return new Promise<DeleteResult>((resolve) => {
-      chrome.runtime.sendMessage(
-        { action: 'DELETE_ALL_RECORDS', data: { type } },
-        (response) => {
+  const deleteAllRecords = useCallback(
+    async (type: 'contacts' | 'opportunities' | 'activities'): Promise<DeleteResult> => {
+      return new Promise<DeleteResult>((resolve) => {
+        chrome.runtime.sendMessage({ action: 'DELETE_ALL_RECORDS', data: { type } }, (response) => {
           if (chrome.runtime.lastError) {
             setError(chrome.runtime.lastError.message || 'Unknown error');
             resolve({ success: false, error: chrome.runtime.lastError.message });
@@ -141,10 +143,11 @@ export function useStorage(): UseStorageReturn {
             setError(errorMsg);
             resolve({ success: false, error: errorMsg });
           }
-        }
-      );
-    });
-  }, [fetchData]);
+        });
+      });
+    },
+    [fetchData],
+  );
 
   return { data, loading, error, deleteRecord, optimisticDelete, deleteAllRecords, refetch: fetchData };
 }

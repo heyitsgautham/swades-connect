@@ -64,11 +64,16 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
 
   const getActivityIcon = (type: Activity['type']) => {
     switch (type) {
-      case 'call': return <Phone size={16} />;
-      case 'meeting': return <Users size={16} />;
-      case 'email': return <Mail size={16} />;
-      case 'todo': return <CheckSquare size={16} />;
-      default: return <FileText size={16} />;
+      case 'call':
+        return <Phone size={16} />;
+      case 'meeting':
+        return <Users size={16} />;
+      case 'email':
+        return <Mail size={16} />;
+      case 'todo':
+        return <CheckSquare size={16} />;
+      default:
+        return <FileText size={16} />;
     }
   };
 
@@ -91,9 +96,7 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-          Status:
-        </label>
+        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Status:</label>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as 'all' | 'open' | 'done')}
@@ -114,9 +117,7 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-          Type:
-        </label>
+        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Type:</label>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value as ActivityType)}
@@ -139,9 +140,7 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-          Sort by:
-        </label>
+        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Sort by:</label>
         <select
           value={sortKey}
           onChange={(e) => handleSort(e.target.value)}
@@ -156,7 +155,9 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
           }}
         >
           {sortOptions.map((opt) => (
-            <option key={opt.key} value={opt.key}>{opt.label}</option>
+            <option key={opt.key} value={opt.key}>
+              {opt.label}
+            </option>
           ))}
         </select>
         {sortKey && (
@@ -179,11 +180,13 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
 
       {/* Export Buttons */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <label style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'var(--color-text-secondary)',
-        }}>
+        <label
+          style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--color-text-secondary)',
+          }}
+        >
           Export:
         </label>
         <button
@@ -254,10 +257,10 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
         >
           <Download size={14} /> JSON
         </button>
-        
+
         {/* Spacer to push Delete All to the right */}
         <div style={{ flex: 1 }} />
-        
+
         <button
           onClick={onDeleteAll}
           disabled={activities.length === 0}
@@ -265,9 +268,7 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: activities.length === 0 
-              ? '#6b7280' 
-              : 'linear-gradient(to right, #8B2E2E, #A03535)',
+            background: activities.length === 0 ? '#6b7280' : 'linear-gradient(to right, #8B2E2E, #A03535)',
             color: 'white',
             padding: '8px 16px',
             border: 'none',
@@ -275,19 +276,26 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
             fontSize: '13px',
             fontWeight: 600,
             cursor: activities.length === 0 ? 'not-allowed' : 'pointer',
-            boxShadow: activities.length === 0 ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            boxShadow:
+              activities.length === 0
+                ? 'none'
+                : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
             transition: 'all 0.2s ease',
             transform: 'scale(1)',
           }}
           onMouseEnter={(e) => {
             if (activities.length > 0) {
               e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+              e.currentTarget.style.boxShadow =
+                '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
             }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = activities.length === 0 ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+            e.currentTarget.style.boxShadow =
+              activities.length === 0
+                ? 'none'
+                : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
           }}
           onMouseDown={(e) => {
             if (activities.length > 0) {
@@ -305,16 +313,20 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
       </div>
 
       {sortedActivities.length === 0 ? (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '48px 16px',
-          color: 'var(--color-text-secondary)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '48px 16px',
+            color: 'var(--color-text-secondary)',
+          }}
+        >
           <Calendar size={48} strokeWidth={1.5} style={{ color: '#d1d5db', marginBottom: '12px' }} />
-          <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '4px' }}>No activities found</p>
+          <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '4px' }}>
+            No activities found
+          </p>
           <p style={{ fontSize: '12px' }}>
             {activities.length === 0
               ? 'Click "Extract Now" to fetch activities from Odoo'
@@ -344,24 +356,28 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <span style={{ display: 'flex', alignItems: 'center' }}>{getActivityIcon(activity.type)}</span>
-                <span style={{
-                  flex: 1,
-                  fontWeight: 600,
-                  color: 'var(--color-text)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}>
+                <span
+                  style={{
+                    flex: 1,
+                    fontWeight: 600,
+                    color: 'var(--color-text)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
                   {activity.summary}
                 </span>
-                <span style={{
-                  fontSize: '11px',
-                  padding: '2px 6px',
-                  fontWeight: 600,
-                  background: activity.status === 'open' ? '#dbeafe' : '#dcfce7',
-                  color: activity.status === 'open' ? '#1e40af' : '#166534',
-                  borderRadius: '4px',
-                }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    padding: '2px 6px',
+                    fontWeight: 600,
+                    background: activity.status === 'open' ? '#dbeafe' : '#dcfce7',
+                    color: activity.status === 'open' ? '#1e40af' : '#166534',
+                    borderRadius: '4px',
+                  }}
+                >
                   {activity.status}
                 </span>
                 <button
@@ -396,7 +412,15 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
                   <Trash2 size={16} />
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  fontSize: '11px',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
                 <span>Type: {activity.type}</span>
                 <span>Due: {activity.dueDate || 'No date'}</span>
                 <span>Assigned: {activity.assignedTo || 'Unassigned'}</span>

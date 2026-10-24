@@ -28,7 +28,10 @@ describe('routeMessage validation', () => {
   });
 
   it('answers TEST', async () => {
-    expect(await routeMessage({ action: 'TEST' }, popup)).toEqual({ success: true, data: { message: 'Service worker is alive' } });
+    expect(await routeMessage({ action: 'TEST' }, popup)).toEqual({
+      success: true,
+      data: { message: 'Service worker is alive' },
+    });
   });
 });
 
@@ -54,7 +57,10 @@ describe('data handlers', () => {
 
   it('SAVE_DATA fails cleanly while another write holds the lock', async () => {
     await acquireLock('extraction-in-flight');
-    expect(await routeMessage({ action: 'SAVE_DATA', data: {} }, popup)).toEqual({ success: false, error: 'Could not acquire lock' });
+    expect(await routeMessage({ action: 'SAVE_DATA', data: {} }, popup)).toEqual({
+      success: false,
+      error: 'Could not acquire lock',
+    });
   });
 
   it('DELETE_RECORD and DELETE_ALL_RECORDS remove records', async () => {
@@ -100,7 +106,9 @@ describe('extraction handlers', () => {
   it('EXTRACT_DATA explains a missing content script', async () => {
     const chrome = chromeMock();
     chrome.tabs.query.mockResolvedValueOnce([{ id: 7 } as chrome.tabs.Tab]);
-    chrome.tabs.sendMessage.mockRejectedValueOnce(new Error('Could not establish connection. Receiving end does not exist.'));
+    chrome.tabs.sendMessage.mockRejectedValueOnce(
+      new Error('Could not establish connection. Receiving end does not exist.'),
+    );
 
     const response = await routeMessage({ action: 'EXTRACT_DATA' }, popup);
     expect(response.error).toMatch(/Content script not loaded/);
@@ -121,7 +129,13 @@ describe('extraction handlers', () => {
           contacts: [makeContact()],
           opportunities: [makeOpportunity()],
           activities: [],
-          metadata: { viewType: 'list', dataModel: 'res.partner', recordsExtracted: 2, extractionTimeMs: 812, timestamp: '2026-01-20T10:00:00Z' },
+          metadata: {
+            viewType: 'list',
+            dataModel: 'res.partner',
+            recordsExtracted: 2,
+            extractionTimeMs: 812,
+            timestamp: '2026-01-20T10:00:00Z',
+          },
         },
       },
       fromTab(3),
@@ -154,7 +168,10 @@ describe('RPC handlers', () => {
     await saveData([], [makeOpportunity({ id: 'opp_hash1', name: 'Widget bulk order' })], []);
 
     const response = await routeMessage(
-      { action: 'ODOO_RPC_UPSERT', data: { type: 'opportunities', records: [makeOpportunity({ id: 'opp_24', name: 'Widget bulk order' })] } },
+      {
+        action: 'ODOO_RPC_UPSERT',
+        data: { type: 'opportunities', records: [makeOpportunity({ id: 'opp_24', name: 'Widget bulk order' })] },
+      },
       fromTab(3),
     );
 
@@ -164,7 +181,10 @@ describe('RPC handlers', () => {
 
   it('ODOO_RPC_DELETE reports how many records it removed', async () => {
     await saveData([], [], [makeActivity({ id: 'act_1' }), makeActivity({ id: 'act_2' })]);
-    const response = await routeMessage({ action: 'ODOO_RPC_DELETE', data: { type: 'activities', ids: ['act_1', 'act_404'] } }, fromTab(3));
+    const response = await routeMessage(
+      { action: 'ODOO_RPC_DELETE', data: { type: 'activities', ids: ['act_1', 'act_404'] } },
+      fromTab(3),
+    );
     expect(response).toEqual({ success: true, data: { deleted: 1 } });
     expect(stored().activities.map((a) => a.id)).toEqual(['act_2']);
   });

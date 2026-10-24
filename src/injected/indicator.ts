@@ -109,7 +109,7 @@ export function mountIndicator(): void {
   if (shadowRoot) return;
 
   shadowHost = ensureHost();
-  
+
   // Check if shadow root already exists (from previous mount)
   if (shadowHost.shadowRoot) {
     // Host exists but we lost our reference - clean up and remount
@@ -150,7 +150,7 @@ export function setIndicatorState(state: IndicatorState, message?: string): void
 
   const color = STATUS_COLORS[state] || STATUS_COLORS.idle;
   statusDot.style.background = color;
-  
+
   // Update dot shadow color based on state
   const shadowColors: Record<string, string> = {
     idle: 'rgba(107, 114, 128, 0.15)',

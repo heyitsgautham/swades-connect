@@ -102,9 +102,7 @@ export interface LeadCard {
 
 export function leadKanbanColumns(columns: { stage: string; cards: LeadCard[] }[]): string {
   const stars = (filled: number) =>
-    [0, 1, 2]
-      .map((i) => `<a class="o_priority_star fa ${i < filled ? 'fa-star' : 'fa-star-o'}"></a>`)
-      .join('');
+    [0, 1, 2].map((i) => `<a class="o_priority_star fa ${i < filled ? 'fa-star' : 'fa-star-o'}"></a>`).join('');
   const card = (c: LeadCard) => `<article class="o_kanban_record">
       <span class="fw-bold fs-5">${c.name}</span>
       <div class="o_kanban_card_crm_lead_revenue">${c.revenue ?? ''}</div>

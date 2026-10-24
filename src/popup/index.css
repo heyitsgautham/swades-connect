@@ -2,15 +2,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap');
 
 /* Tailwind CSS */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Design System - CSS Custom Properties */
 :root {
   /* Color Palette */
   --color-primary: #973131;
-  --color-accent: #FFF4DB;
-  --color-background: #FFFFFF;
-  --color-text: #1D1D28;
+  --color-accent: #fff4db;
+  --color-background: #ffffff;
+  --color-text: #1d1d28;
   --color-text-secondary: #6b7280;
   --color-border: #e5e7eb;
   --color-success: #16a34a;
@@ -20,7 +20,7 @@
   --font-heading: 'Oswald', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
+
   /* Font Sizes (scaled for popup) */
   --text-xs: 11px;
   --text-sm: 12px;
@@ -58,7 +58,10 @@ body {
 }
 
 /* Heading styles */
-h1, h2, h3, .heading {
+h1,
+h2,
+h3,
+.heading {
   font-family: var(--font-heading);
   font-weight: 700;
   letter-spacing: 0.5px;

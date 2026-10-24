@@ -13,7 +13,13 @@ describe('extractOpportunities from the list view', () => {
   it('parses name, revenue, stage, probability and deadline', async () => {
     render(
       leadListRows([
-        { name: 'Widget bulk order', revenue: '₹ 12,500.00', stage: 'Qualified', probability: '40.00', deadline: '2026-03-31' },
+        {
+          name: 'Widget bulk order',
+          revenue: '₹ 12,500.00',
+          stage: 'Qualified',
+          probability: '40.00',
+          deadline: '2026-03-31',
+        },
       ]),
     );
 
@@ -51,7 +57,12 @@ describe('extractOpportunities from the list view', () => {
 
   it('defaults missing stage and numbers', async () => {
     render(leadListRows([{ name: 'Bare deal' }]));
-    expect((await extractOpportunities())[0]).toMatchObject({ revenue: 0, stage: 'Unknown', probability: 0, closeDate: '' });
+    expect((await extractOpportunities())[0]).toMatchObject({
+      revenue: 0,
+      stage: 'Unknown',
+      probability: 0,
+      closeDate: '',
+    });
   });
 });
 

@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { detectDataModel, detectViewType, getOdooVersion, getViewContext, isOdooPage, waitForOdooReady } from '../viewDetector';
+import {
+  detectDataModel,
+  detectViewType,
+  getOdooVersion,
+  getViewContext,
+  isOdooPage,
+  waitForOdooReady,
+} from '../viewDetector';
 import { render } from '../../test/odooDom';
 
 function visit(path: string) {

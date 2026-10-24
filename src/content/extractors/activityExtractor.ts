@@ -11,16 +11,13 @@ const log = createLogger('extract');
  * @param fallbackParts - Parts to use for content hash if not found in cache
  * @returns Activity ID in format `act_{id}` or `act_{hash}`
  */
-function generateActivityId(
-  rowIndex: number,
-  ...fallbackParts: (string | number)[]
-): string {
+function generateActivityId(rowIndex: number, ...fallbackParts: (string | number)[]): string {
   // Try to get real Odoo ID from cache using row index
   const realId = lookupActivityId(rowIndex);
   if (realId !== null) {
     return `act_${realId}`;
   }
-  
+
   // Fall back to content hash
   return generateContentHash('act', ...fallbackParts);
 }
@@ -28,14 +25,14 @@ function generateActivityId(
 /**
  * Main function to extract activities from the current Odoo page.
  * Handles both list and kanban views.
- * 
+ *
  * This is an async function to allow initializing the ID cache from storage
  * before extraction, addressing the timing issue where web_search_read
  * happens before the RPC interceptor is installed.
  */
 export async function extractActivities(): Promise<Activity[]> {
   const activities: Activity[] = [];
-  
+
   // Initialize activity ID cache from storage to get previously captured real IDs
   await initializeActivityIdCacheFromStorage();
 
@@ -95,8 +92,7 @@ function extractActivityFromRow(row: HTMLElement, index: number): Activity | nul
 
     // Extract summary from td[name="summary"]
     const summaryCell = row.querySelector('td[name="summary"]');
-    const summary = summaryCell?.getAttribute('data-tooltip') ||
-                    summaryCell?.textContent?.trim() || '';
+    const summary = summaryCell?.getAttribute('data-tooltip') || summaryCell?.textContent?.trim() || '';
 
     if (!summary) {
       return null;
@@ -104,15 +100,16 @@ function extractActivityFromRow(row: HTMLElement, index: number): Activity | nul
 
     // Extract activity type from td[name="activity_type_id"]
     const typeCell = row.querySelector('td[name="activity_type_id"]');
-    const typeText = typeCell?.getAttribute('data-tooltip') ||
-                     typeCell?.textContent?.trim() || '';
+    const typeText = typeCell?.getAttribute('data-tooltip') || typeCell?.textContent?.trim() || '';
     const type = mapActivityType(typeText);
 
     // Extract assigned user from td[name="user_id"]
     const userCell = row.querySelector('td[name="user_id"]');
-    const assignedTo = userCell?.getAttribute('data-tooltip') ||
-                       userCell?.querySelector('.o_many2one span')?.textContent?.trim() ||
-                       userCell?.textContent?.trim() || '';
+    const assignedTo =
+      userCell?.getAttribute('data-tooltip') ||
+      userCell?.querySelector('.o_many2one span')?.textContent?.trim() ||
+      userCell?.textContent?.trim() ||
+      '';
 
     // Extract linked document name from td[name="res_name"] - available but not in Activity type yet
     // const resNameCell = row.querySelector('td[name="res_name"]');
@@ -124,8 +121,7 @@ function extractActivityFromRow(row: HTMLElement, index: number): Activity | nul
     const dueDate = parseDueDate(dueDateCell as HTMLElement);
 
     // Check status - look for indication that it's done
-    const isDone = row.classList.contains('o_activity_done') ||
-                   row.querySelector('.o_activity_done') !== null;
+    const isDone = row.classList.contains('o_activity_done') || row.querySelector('.o_activity_done') !== null;
     const status: Activity['status'] = isDone ? 'done' : 'open';
 
     // Generate activity ID - prefer real Odoo ID from cache (using row index), fall back to content hash
@@ -164,7 +160,7 @@ function extractActivityFromKanbanCard(card: HTMLElement, index: number): Activi
     // In the kanban, the first truncate has the linked record, second has summary
     const textTruncates = card.querySelectorAll('span.text-truncate');
     let summary = '';
-    
+
     // Try to find summary from direct child span.text-truncate (not inside the first div)
     const directSummary = card.querySelector(':scope > span.text-truncate');
     if (directSummary) {
@@ -193,23 +189,21 @@ function extractActivityFromKanbanCard(card: HTMLElement, index: number): Activi
     // Extract assigned user from footer with multiple fallback strategies
     const userElement = card.querySelector('footer div[name="user_id"]');
     let assignedTo = '';
-    
+
     if (userElement) {
       // Try to get from image attributes (title, alt, or data attributes)
       const userImg = userElement.querySelector('img');
       if (userImg) {
-        assignedTo = userImg.getAttribute('title') ||
-                     userImg.getAttribute('alt') ||
-                     userImg.getAttribute('data-tooltip') || '';
+        assignedTo =
+          userImg.getAttribute('title') || userImg.getAttribute('alt') || userImg.getAttribute('data-tooltip') || '';
       }
-      
+
       // Fallback: look for text in span elements
       if (!assignedTo) {
-        const textSpan = userElement.querySelector('span.text-truncate') ||
-                        userElement.querySelector('span');
+        const textSpan = userElement.querySelector('span.text-truncate') || userElement.querySelector('span');
         assignedTo = textSpan?.textContent?.trim() || '';
       }
-      
+
       // Last resort: get all text content
       if (!assignedTo) {
         assignedTo = userElement.textContent?.trim() || '';
@@ -225,8 +219,7 @@ function extractActivityFromKanbanCard(card: HTMLElement, index: number): Activi
     const dueDate = parseDueDate(dueDateElement as HTMLElement);
 
     // Check status - look for indication that it's done
-    const isDone = card.classList.contains('o_activity_done') ||
-                   card.querySelector('.o_activity_done') !== null;
+    const isDone = card.classList.contains('o_activity_done') || card.querySelector('.o_activity_done') !== null;
     const status: Activity['status'] = isDone ? 'done' : 'open';
 
     // Generate activity ID - prefer real Odoo ID from cache (using row index), fall back to content hash

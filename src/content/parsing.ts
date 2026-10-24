@@ -10,11 +10,11 @@ import type { Activity } from '../shared/types';
  * Uses a simple hash of the content to create a deterministic ID.
  */
 export function generateContentHash(prefix: string, ...parts: (string | number)[]): string {
-  const content = parts.map(p => String(p).trim().toLowerCase()).join('|');
+  const content = parts.map((p) => String(p).trim().toLowerCase()).join('|');
   // Simple hash function (djb2)
   let hash = 5381;
   for (let i = 0; i < content.length; i++) {
-    hash = ((hash << 5) + hash) + content.charCodeAt(i);
+    hash = (hash << 5) + hash + content.charCodeAt(i);
     hash = hash & hash; // Convert to 32-bit integer
   }
   // Convert to positive number and then to base36 for shorter string
@@ -26,7 +26,7 @@ export function generateContentHash(prefix: string, ...parts: (string | number)[
  * Parses a complete_name field that may contain "company, person name" format.
  * In Odoo, when a contact has a parent company, the complete_name is formatted as:
  * "Company Name, Person Name"
- * 
+ *
  * @param completeName - The raw complete_name value from Odoo
  * @returns Object with parsed name and company, or just name if no comma present
  */
@@ -37,12 +37,12 @@ export function parseCompleteName(completeName: string): { name: string; company
 
   // Check if the name contains a comma (indicating "company, person" format)
   const commaIndex = completeName.indexOf(',');
-  
+
   if (commaIndex !== -1) {
     // Format: "Company Name, Person Name"
     const companyPart = completeName.substring(0, commaIndex).trim();
     const personPart = completeName.substring(commaIndex + 1).trim();
-    
+
     // Only use this parsing if both parts are non-empty
     if (companyPart && personPart) {
       return {
@@ -61,7 +61,7 @@ export function parseCompleteName(completeName: string): { name: string; company
  */
 export function parseRevenue(revenueText: string): number {
   if (!revenueText) return 0;
-  
+
   try {
     // Remove currency symbols, spaces, and commas
     const cleaned = revenueText
@@ -69,7 +69,7 @@ export function parseRevenue(revenueText: string): number {
       .replace(/,/g, '')
       .replace(/\s/g, '')
       .trim();
-    
+
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? 0 : parsed;
   } catch {

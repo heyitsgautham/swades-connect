@@ -1,10 +1,10 @@
 /**
  * Odoo RPC Interceptor - Page Context Script
- * 
+ *
  * This script is injected into the page context to intercept Odoo's RPC calls.
  * It must be a separate file (not inline) to comply with CSP policies.
  */
-(function() {
+(function () {
   'use strict';
 
   // Idempotency check - don't install twice
@@ -21,7 +21,16 @@
   // name_create is used for quick contact creation (e.g., from opportunity forms)
   // web_search_read and web_read_group are used to capture real Odoo IDs when loading list/kanban views
   // web_read_group is used by kanban views with grouping (like opportunities by stage)
-  var INTERCEPTED_METHODS = ['create', 'write', 'unlink', 'web_save', 'action_done', 'name_create', 'web_search_read', 'web_read_group'];
+  var INTERCEPTED_METHODS = [
+    'create',
+    'write',
+    'unlink',
+    'web_save',
+    'action_done',
+    'name_create',
+    'web_search_read',
+    'web_read_group',
+  ];
   // Match both /call_kw/ and /call_button/ endpoints
   // call_button is used for action_done and some unlink operations on activities
   var RPC_ENDPOINT_PATTERN = /\/web\/dataset\/call_(?:kw|button)\/([^/]+)\/([^/?]+)/;
@@ -63,8 +72,8 @@
         args: args,
         result: result,
         url: url,
-        ts: Date.now()
-      }
+        ts: Date.now(),
+      },
     };
 
     console.log('[Odoo RPC Interceptor] Emitting signal:', signal.payload.model, signal.payload.method);
@@ -88,11 +97,11 @@
 
   var originalFetch = window.fetch;
 
-  window.fetch = function() {
+  window.fetch = function () {
     var args = arguments;
     var input = args[0];
     var init = args[1];
-    var url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+    var url = typeof input === 'string' ? input : input && input.url ? input.url : '';
 
     // Check if this is an RPC call we care about
     var rpcInfo = parseRpcEndpoint(url);
@@ -108,25 +117,22 @@
       }
 
       // Make the actual request
-      return originalFetch.apply(this, args).then(function(response) {
+      return originalFetch.apply(this, args).then(function (response) {
         // Clone response so we can read the body
         var clonedResponse = response.clone();
 
         // Read and parse the response
-        clonedResponse.text().then(function(text) {
-          var jsonResponse = safeParseJSON(text);
-          if (jsonResponse && jsonResponse.result !== undefined) {
-            emitRpcSignal(
-              rpcInfo.model,
-              rpcInfo.method,
-              requestArgs,
-              jsonResponse.result,
-              url
-            );
-          }
-        }).catch(function(err) {
-          console.warn('[Odoo RPC Interceptor] Failed to read fetch response:', err);
-        });
+        clonedResponse
+          .text()
+          .then(function (text) {
+            var jsonResponse = safeParseJSON(text);
+            if (jsonResponse && jsonResponse.result !== undefined) {
+              emitRpcSignal(rpcInfo.model, rpcInfo.method, requestArgs, jsonResponse.result, url);
+            }
+          })
+          .catch(function (err) {
+            console.warn('[Odoo RPC Interceptor] Failed to read fetch response:', err);
+          });
 
         return response;
       });
@@ -145,14 +151,14 @@
   var originalXHROpen = XMLHttpRequest.prototype.open;
   var originalXHRSend = XMLHttpRequest.prototype.send;
 
-  XMLHttpRequest.prototype.open = function(method, url) {
+  XMLHttpRequest.prototype.open = function (method, url) {
     // Store the URL for later use
     this.__rpcInterceptorUrl = url;
     this.__rpcInterceptorMethod = method;
     return originalXHROpen.apply(this, arguments);
   };
 
-  XMLHttpRequest.prototype.send = function(body) {
+  XMLHttpRequest.prototype.send = function (body) {
     var xhr = this;
     var url = this.__rpcInterceptorUrl;
     var rpcInfo = parseRpcEndpoint(url);
@@ -172,11 +178,11 @@
         model: rpcInfo.model,
         method: rpcInfo.method,
         args: requestArgs,
-        url: url
+        url: url,
       };
 
       // Add load listener to capture response
-      this.addEventListener('load', function() {
+      this.addEventListener('load', function () {
         if (xhr.__rpcInterceptorInfo && xhr.status >= 200 && xhr.status < 300) {
           try {
             var jsonResponse = safeParseJSON(xhr.responseText);
@@ -186,7 +192,7 @@
                 xhr.__rpcInterceptorInfo.method,
                 xhr.__rpcInterceptorInfo.args,
                 jsonResponse.result,
-                xhr.__rpcInterceptorInfo.url
+                xhr.__rpcInterceptorInfo.url,
               );
             }
           } catch (err) {

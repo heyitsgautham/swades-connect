@@ -11,12 +11,7 @@ import { setIndicatorState } from '../injected/indicator';
 import { setupRpcSignalListener, type OdooRpcSignal } from '../injected/rpcInterceptor';
 import type { DataType } from '../shared/messages';
 import { createLogger, describeError } from '../shared/logger';
-import {
-  populateActivityIdCache,
-  populateOpportunityIdCache,
-  setActivityId,
-  setOpportunityId,
-} from './idCache';
+import { populateActivityIdCache, populateOpportunityIdCache, setActivityId, setOpportunityId } from './idCache';
 import {
   convertRecord,
   ID_PREFIX,

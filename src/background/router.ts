@@ -1,7 +1,13 @@
 import { createLogger } from '../shared/logger';
 import type { MessageResponse } from '../shared/messages';
 import { parseBackgroundMessage } from '../shared/schemas';
-import { handleDeleteAllRecords, handleDeleteRecord, handleGetData, handleSaveData, handleUpdateBadge } from './handlers/data';
+import {
+  handleDeleteAllRecords,
+  handleDeleteRecord,
+  handleGetData,
+  handleSaveData,
+  handleUpdateBadge,
+} from './handlers/data';
 import { handleExtractionComplete, handleExtractionError, handleExtractRequest } from './handlers/extract';
 import { handleRpcDelete, handleRpcUpsert } from './handlers/rpc';
 

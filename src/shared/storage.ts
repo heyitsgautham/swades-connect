@@ -35,7 +35,7 @@ export async function getData(): Promise<StorageSchema['odoo_data']> {
 export async function saveData(
   newContacts: Contact[],
   newOpportunities: Opportunity[],
-  newActivities: Activity[]
+  newActivities: Activity[],
 ): Promise<void> {
   const existing = await getData();
 
@@ -55,12 +55,9 @@ export async function saveData(
 }
 
 // Delete individual record
-export async function deleteRecord(
-  type: 'contacts' | 'opportunities' | 'activities',
-  id: string
-): Promise<void> {
+export async function deleteRecord(type: 'contacts' | 'opportunities' | 'activities', id: string): Promise<void> {
   const existing = await getData();
-  
+
   if (type === 'contacts') {
     existing.contacts = existing.contacts.filter((record) => record.id !== id);
   } else if (type === 'opportunities') {
@@ -68,16 +65,14 @@ export async function deleteRecord(
   } else if (type === 'activities') {
     existing.activities = existing.activities.filter((record) => record.id !== id);
   }
-  
+
   await chrome.storage.local.set({ [STORAGE_KEY]: existing });
 }
 
 // Delete all records of a specific type
-export async function deleteAllRecords(
-  type: 'contacts' | 'opportunities' | 'activities'
-): Promise<void> {
+export async function deleteAllRecords(type: 'contacts' | 'opportunities' | 'activities'): Promise<void> {
   const existing = await getData();
-  
+
   if (type === 'contacts') {
     existing.contacts = [];
   } else if (type === 'opportunities') {
@@ -85,7 +80,7 @@ export async function deleteAllRecords(
   } else if (type === 'activities') {
     existing.activities = [];
   }
-  
+
   await chrome.storage.local.set({ [STORAGE_KEY]: existing });
 }
 
@@ -112,10 +107,7 @@ export interface UpsertResult {
 
 // Upsert one or more records by ID (with locking)
 // For partial updates, merges new fields with existing record data
-export async function upsertRecords(
-  type: RecordType,
-  records: RecordData[]
-): Promise<UpsertResult> {
+export async function upsertRecords(type: RecordType, records: RecordData[]): Promise<UpsertResult> {
   if (records.length === 0) {
     return { added: 0, updated: 0 };
   }
@@ -130,7 +122,7 @@ export async function upsertRecords(
   try {
     const existing = await getData();
     const existingRecords = existing[type] as RecordData[];
-    
+
     // Create a map of existing records by ID for quick lookup
     const existingMap = new Map<string, RecordData>();
     for (const rec of existingRecords) {
@@ -143,7 +135,7 @@ export async function upsertRecords(
     // Merge incoming records with existing ones
     for (const record of records) {
       const existingRecord = existingMap.get(record.id);
-      
+
       if (existingRecord) {
         existingMap.set(record.id, mergeNonEmpty(existingRecord, record));
         updated++;
@@ -205,7 +197,7 @@ const MATCH_FIELD = { opportunities: 'name', activities: 'summary' } as const;
  */
 export async function upsertUpgradingHashIds(
   type: 'opportunities' | 'activities',
-  records: RecordData[]
+  records: RecordData[],
 ): Promise<UpsertResult> {
   if (records.length === 0) {
     return { added: 0, updated: 0 };
@@ -223,7 +215,9 @@ export async function upsertUpgradingHashIds(
     const stored = [...(existing[type] as RecordData[])];
     const field = MATCH_FIELD[type];
     const normalize = (record: RecordData) =>
-      String((record as unknown as Record<string, unknown>)[field] ?? '').toLowerCase().trim();
+      String((record as unknown as Record<string, unknown>)[field] ?? '')
+        .toLowerCase()
+        .trim();
 
     let added = 0;
     let updated = 0;
@@ -255,10 +249,7 @@ export async function upsertUpgradingHashIds(
 }
 
 // Delete multiple records by ID array (with locking)
-export async function deleteRecordsById(
-  type: RecordType,
-  ids: string[]
-): Promise<number> {
+export async function deleteRecordsById(type: RecordType, ids: string[]): Promise<number> {
   if (ids.length === 0) {
     return 0;
   }

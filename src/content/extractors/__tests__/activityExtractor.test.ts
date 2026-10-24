@@ -19,8 +19,22 @@ describe('extractActivities from the list view', () => {
 
     const result = await extractActivities();
     expect(result).toEqual([
-      { id: expect.stringMatching(/^act_/), type: 'call', summary: 'Follow up on quote', dueDate: '2026-02-14', assignedTo: 'Sam Placeholder', status: 'open' },
-      { id: expect.stringMatching(/^act_/), type: 'email', summary: 'Send brochure', dueDate: '2026-02-20', assignedTo: 'Sam Placeholder', status: 'done' },
+      {
+        id: expect.stringMatching(/^act_/),
+        type: 'call',
+        summary: 'Follow up on quote',
+        dueDate: '2026-02-14',
+        assignedTo: 'Sam Placeholder',
+        status: 'open',
+      },
+      {
+        id: expect.stringMatching(/^act_/),
+        type: 'email',
+        summary: 'Send brochure',
+        dueDate: '2026-02-20',
+        assignedTo: 'Sam Placeholder',
+        status: 'done',
+      },
     ]);
   });
 
@@ -58,7 +72,13 @@ describe('extractActivities from the kanban view', () => {
   it('reads the summary span, type badge, user avatar title and due date', async () => {
     render(
       activityKanbanCards([
-        { linkedRecord: 'Widget bulk order', summary: 'Demo call', type: 'Meeting', userTitle: 'Sam Placeholder', deadlineTitle: '01/03/2026' },
+        {
+          linkedRecord: 'Widget bulk order',
+          summary: 'Demo call',
+          type: 'Meeting',
+          userTitle: 'Sam Placeholder',
+          deadlineTitle: '01/03/2026',
+        },
       ]),
     );
 
@@ -73,7 +93,9 @@ describe('extractActivities from the kanban view', () => {
   });
 
   it('falls back to the linked record name and user text', async () => {
-    render(activityKanbanCards([{ linkedRecord: 'Widget bulk order', userText: 'Pat Example', type: 'To-Do', done: true }]));
+    render(
+      activityKanbanCards([{ linkedRecord: 'Widget bulk order', userText: 'Pat Example', type: 'To-Do', done: true }]),
+    );
 
     expect((await extractActivities())[0]).toMatchObject({
       summary: 'Widget bulk order',

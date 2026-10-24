@@ -29,7 +29,10 @@ describe('generateContentHash', () => {
 
 describe('parseCompleteName', () => {
   it('splits "Company, Person" into its parts', () => {
-    expect(parseCompleteName('Acme Widgets, Mira Testwell')).toEqual({ name: 'Mira Testwell', company: 'Acme Widgets' });
+    expect(parseCompleteName('Acme Widgets, Mira Testwell')).toEqual({
+      name: 'Mira Testwell',
+      company: 'Acme Widgets',
+    });
   });
 
   it('keeps a name without a comma whole', () => {

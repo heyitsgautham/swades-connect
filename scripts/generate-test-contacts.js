@@ -8,7 +8,9 @@
 const COUNT = 100;
 
 // CSV Header - Match Odoo's exact template format
-console.log('Name,Company Type,Related Company,Email,Phone,Street,Street2,City,State,Zip,Country,Tax ID,Website,Tags,Reference,Notes');
+console.log(
+  'Name,Company Type,Related Company,Email,Phone,Street,Street2,City,State,Zip,Country,Tax ID,Website,Tags,Reference,Notes',
+);
 
 // Generate contacts
 for (let i = 1; i <= COUNT; i++) {
@@ -29,5 +31,7 @@ for (let i = 1; i <= COUNT; i++) {
   const reference = `REF-${String(i).padStart(4, '0')}`;
   const notes = `Test contact ${i} - Generated for pagination testing`;
 
-  console.log(`"${name}","${companyType}","${relatedCompany}","${email}","${phone}","${street}","${street2}","${city}","${state}","${zip}","${country}","${taxId}","${website}","${tags}","${reference}","${notes}"`);
+  console.log(
+    `"${name}","${companyType}","${relatedCompany}","${email}","${phone}","${street}","${street2}","${city}","${state}","${zip}","${country}","${taxId}","${website}","${tags}","${reference}","${notes}"`,
+  );
 }

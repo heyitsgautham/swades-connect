@@ -42,7 +42,10 @@ afterEach(() => {
 
 describe('handleExtraction', () => {
   it('extracts the contacts page and reports them with elapsed time, not a timestamp', async () => {
-    renderOdooPage('res.partner', contactListRows([{ partnerId: 12, completeName: 'Mira Testwell', email: 'mira@example.com' }]));
+    renderOdooPage(
+      'res.partner',
+      contactListRows([{ partnerId: 12, completeName: 'Mira Testwell', email: 'mira@example.com' }]),
+    );
 
     const response = await runExtraction();
 
@@ -51,7 +54,11 @@ describe('handleExtraction', () => {
     expect(message?.data?.contacts).toEqual([
       { id: 'contact_12', name: 'Mira Testwell', email: 'mira@example.com', phone: '', company: '', country: '' },
     ]);
-    const metadata = message?.data?.metadata as { extractionTimeMs: number; dataModel: string; recordsExtracted: number };
+    const metadata = message?.data?.metadata as {
+      extractionTimeMs: number;
+      dataModel: string;
+      recordsExtracted: number;
+    };
     expect(metadata.dataModel).toBe('res.partner');
     expect(metadata.recordsExtracted).toBe(1);
     expect(metadata.extractionTimeMs).toBeGreaterThanOrEqual(500);
@@ -62,7 +69,13 @@ describe('handleExtraction', () => {
 
   it('builds activities from the RPC records captured while paging', async () => {
     populateActivityIdCache([
-      { id: 61, summary: 'From RPC', activity_type_id: [1, 'Call'], user_id: [2, 'Sam Placeholder'], date_deadline: '2026-02-01' },
+      {
+        id: 61,
+        summary: 'From RPC',
+        activity_type_id: [1, 'Call'],
+        user_id: [2, 'Sam Placeholder'],
+        date_deadline: '2026-02-01',
+      },
     ]);
     renderOdooPage('mail.activity', activityListRows([{ summary: 'From DOM' }]));
 

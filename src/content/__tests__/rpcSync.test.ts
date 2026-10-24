@@ -2,12 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { OdooRpcMethod, OdooRpcSignal } from '../../injected/rpcInterceptor';
 import { setIndicatorState } from '../../injected/indicator';
 import { handleRpcSignal, isRpcSyncEnabled, startRpcSync, stopRpcSync } from '../rpcSync';
-import {
-  clearActivityIdCache,
-  clearOpportunityIdCache,
-  getActivityIdArray,
-  lookupOpportunityId,
-} from '../idCache';
+import { clearActivityIdCache, clearOpportunityIdCache, getActivityIdArray, lookupOpportunityId } from '../idCache';
 import { chromeMock } from '../../test/chromeMock';
 
 vi.mock('../../injected/indicator', () => ({
@@ -45,7 +40,16 @@ describe('handleRpcSignal', () => {
         action: 'ODOO_RPC_UPSERT',
         data: {
           type: 'contacts',
-          records: [{ id: 'contact_12', name: 'Mira Testwell', email: 'mira@example.com', phone: '', company: '', country: 'Testland' }],
+          records: [
+            {
+              id: 'contact_12',
+              name: 'Mira Testwell',
+              email: 'mira@example.com',
+              phone: '',
+              company: '',
+              country: 'Testland',
+            },
+          ],
         },
       },
     ]);
@@ -92,7 +96,10 @@ describe('handleRpcSignal', () => {
     expect(sent()).toEqual([
       {
         action: 'ODOO_RPC_UPSERT',
-        data: { type: 'contacts', records: [{ id: 'contact_55', name: 'Quick Contact', email: '', phone: '', company: '', country: '' }] },
+        data: {
+          type: 'contacts',
+          records: [{ id: 'contact_55', name: 'Quick Contact', email: '', phone: '', company: '', country: '' }],
+        },
       },
     ]);
     expect(setIndicatorState).toHaveBeenCalledWith('success', 'Contact Created');
@@ -104,7 +111,9 @@ describe('handleRpcSignal', () => {
   });
 
   it('builds an added opportunity from web_save args when the result is id-only', async () => {
-    handleRpcSignal(signal('crm.lead', 'web_save', [[], { name: 'New deal', expected_revenue: 900, stage_id: 1 }], [{ id: 44 }]));
+    handleRpcSignal(
+      signal('crm.lead', 'web_save', [[], { name: 'New deal', expected_revenue: 900, stage_id: 1 }], [{ id: 44 }]),
+    );
     await flush();
 
     expect(sent()).toEqual([
@@ -122,9 +131,20 @@ describe('handleRpcSignal', () => {
 
   it('syncs a full record returned by an edit', async () => {
     handleRpcSignal(
-      signal('mail.activity', 'web_save', [[8], { summary: 'Edited' }], [
-        { id: 8, summary: 'Edited', activity_type_id: [1, 'Email'], user_id: [2, 'Sam Placeholder'], date_deadline: '2026-02-01' },
-      ]),
+      signal(
+        'mail.activity',
+        'web_save',
+        [[8], { summary: 'Edited' }],
+        [
+          {
+            id: 8,
+            summary: 'Edited',
+            activity_type_id: [1, 'Email'],
+            user_id: [2, 'Sam Placeholder'],
+            date_deadline: '2026-02-01',
+          },
+        ],
+      ),
     );
     await flush();
 

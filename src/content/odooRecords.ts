@@ -80,8 +80,7 @@ export function extractMany2oneName(value: unknown): string {
 export function convertToContact(record: OdooRecord): Contact {
   const odooId = sanitizeOdooValue(record.id, '');
 
-  let name =
-    (sanitizeOdooValue(record.name, '') as string) || (sanitizeOdooValue(record.display_name, '') as string);
+  let name = (sanitizeOdooValue(record.name, '') as string) || (sanitizeOdooValue(record.display_name, '') as string);
 
   // Company can be company_name (string), parent_id (Many2one) or parent_name.
   let company = sanitizeOdooValue(record.company_name, '') as string;
