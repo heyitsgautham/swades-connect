@@ -15,7 +15,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage && pnpm run build"
   },
   "dependencies": {
     "lucide-react": "^0.562.0",

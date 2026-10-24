@@ -1,0 +1,16 @@
+# docker compose run --rm check   lint, typecheck and tests with coverage
+# docker compose run --rm build   builds the extension into ./dist for "Load unpacked"
+services:
+  check:
+    build:
+      context: .
+      target: deps
+    command: pnpm run check
+
+  build:
+    build:
+      context: .
+      target: deps
+    command: sh -c "pnpm run build && rm -rf /out/* && cp -r dist/. /out/"
+    volumes:
+      - ./dist:/out
