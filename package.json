@@ -16,7 +16,9 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "check": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage && pnpm run build"
+    "check": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test:coverage && pnpm run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "lucide-react": "^0.562.0",
@@ -41,6 +43,7 @@
     "globals": "^16.5.0",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.31",
+    "prettier": "^3.9.10",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.0",

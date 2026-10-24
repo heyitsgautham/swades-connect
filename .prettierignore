@@ -1,0 +1,6 @@
+dist
+coverage
+out
+odoo-html
+pnpm-lock.yaml
+*.md
