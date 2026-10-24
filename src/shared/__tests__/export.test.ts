@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { exportCSV, exportData, exportJSON } from '../export';
+import { exportCSV, exportData, exportFile, exportJSON } from '../export';
 import { makeActivity, makeContact, makeOpportunity } from '../../test/fixtures';
 
 describe('exportCSV', () => {
@@ -42,5 +42,18 @@ describe('exportJSON and exportData', () => {
     const data = [makeContact()];
     expect(exportData('contacts', data, 'csv')).toBe(exportCSV('contacts', data));
     expect(exportData('contacts', data, 'json')).toBe(exportJSON('contacts', data));
+  });
+});
+
+describe('exportFile', () => {
+  it('names the download by type and time and picks the MIME type', () => {
+    expect(exportFile('contacts', 'csv', 1768903200000)).toEqual({
+      filename: 'swades-contacts-1768903200000.csv',
+      mime: 'text/csv',
+    });
+    expect(exportFile('activities', 'json', 1)).toEqual({
+      filename: 'swades-activities-1.json',
+      mime: 'application/json',
+    });
   });
 });

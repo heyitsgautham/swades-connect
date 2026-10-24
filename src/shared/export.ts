@@ -1,7 +1,7 @@
 import type { Contact, Opportunity, Activity } from './types';
 
-type ExportType = 'contacts' | 'opportunities' | 'activities';
-type ExportFormat = 'csv' | 'json';
+export type ExportType = 'contacts' | 'opportunities' | 'activities';
+export type ExportFormat = 'csv' | 'json';
 type Row = Record<string, string | number | undefined>;
 
 function toCSV(rows: Row[]): string {
@@ -70,4 +70,16 @@ export function exportData(
   format: ExportFormat,
 ): string {
   return format === 'csv' ? exportCSV(type, data) : exportJSON(type, data);
+}
+
+/** File name and MIME type for a download, for example swades-contacts-1768903200000.csv. */
+export function exportFile(
+  type: ExportType,
+  format: ExportFormat,
+  now = Date.now(),
+): { filename: string; mime: string } {
+  return {
+    filename: `swades-${type}-${now}.${format}`,
+    mime: format === 'csv' ? 'text/csv' : 'application/json',
+  };
 }
