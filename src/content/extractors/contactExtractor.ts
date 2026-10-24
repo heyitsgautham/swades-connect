@@ -1,5 +1,8 @@
 import type { Contact } from '../../shared/types';
 import { parseCompleteName } from '../parsing';
+import { createLogger, describeError } from '../../shared/logger';
+
+const log = createLogger('extract');
 
 /**
  * Extracts contacts from both Odoo list and kanban views.
@@ -20,7 +23,7 @@ export function extractContacts(): Contact[] {
             contacts.push(contact);
           }
         } catch (error) {
-          console.warn(`Failed to extract contact from row ${index}:`, error);
+          log.warn(`Failed to extract contact from row ${index}`, { error: describeError(error) });
         }
       });
       return contacts;
@@ -37,15 +40,15 @@ export function extractContacts(): Contact[] {
             contacts.push(contact);
           }
         } catch (error) {
-          console.warn(`Failed to extract contact from kanban card ${index}:`, error);
+          log.warn(`Failed to extract contact from kanban card ${index}`, { error: describeError(error) });
         }
       });
       return contacts;
     }
 
-    console.warn('No contacts found in list or kanban view');
+    log.warn('No contacts found in list or kanban view');
   } catch (error) {
-    console.error('Error in contact extraction:', error);
+    log.error('Error in contact extraction', { error: describeError(error) });
   }
 
   return contacts;
@@ -124,7 +127,7 @@ function extractContactFromRow(row: HTMLElement, index: number): Contact | null 
       country: country || '',
     };
   } catch (error) {
-    console.warn('Error extracting contact from row:', error);
+    log.warn('Error extracting contact from row', { error: describeError(error) });
     return null;
   }
 }
@@ -180,7 +183,7 @@ function extractContactFromKanbanCard(card: HTMLElement, index: number): Contact
       country: contactLocation || '',
     };
   } catch (error) {
-    console.warn('Error extracting contact from kanban card:', error);
+    log.warn('Error extracting contact from kanban card', { error: describeError(error) });
     return null;
   }
 }
@@ -261,7 +264,7 @@ function extractFieldByIcon(container: HTMLElement, iconClass: string): string {
 
     return '';
   } catch (error) {
-    console.warn(`Error extracting field by icon ${iconClass}:`, error);
+    log.warn(`Error extracting field by icon ${iconClass}`, { error: describeError(error) });
     return '';
   }
 }

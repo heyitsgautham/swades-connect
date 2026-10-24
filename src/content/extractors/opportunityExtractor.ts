@@ -1,6 +1,9 @@
 import type { Opportunity } from '../../shared/types';
 import { lookupOpportunityId, initializeOpportunityIdCacheFromStorage } from '../idCache';
 import { generateContentHash, parseRevenue } from '../parsing';
+import { createLogger, describeError } from '../../shared/logger';
+
+const log = createLogger('extract');
 
 /**
  * Extract opportunity from a list view row
@@ -75,7 +78,7 @@ function extractOpportunityFromRow(row: HTMLElement): Opportunity | null {
       closeDate,
     };
   } catch (error) {
-    console.warn('Error extracting opportunity from row:', error);
+    log.warn('Error extracting opportunity from row', { error: describeError(error) });
     return null;
   }
 }
@@ -146,7 +149,7 @@ function extractOpportunityFromKanbanCard(
       closeDate,
     };
   } catch (error) {
-    console.warn('Error extracting opportunity from kanban card:', error);
+    log.warn('Error extracting opportunity from kanban card', { error: describeError(error) });
     return null;
   }
 }
@@ -171,7 +174,7 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
     const listRows = document.querySelectorAll('tr.o_data_row');
 
     if (listRows.length > 0) {
-      console.log(`[OpportunityExtractor] Extracting from list view (${listRows.length} rows)`);
+      log.debug(`Extracting from list view (${listRows.length} rows)`);
       
       listRows.forEach((row, index) => {
         try {
@@ -180,7 +183,7 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
             opportunities.push(opportunity);
           }
         } catch (error) {
-          console.warn(`[OpportunityExtractor] Failed to extract opportunity from row ${index}:`, error);
+          log.warn(`Failed to extract opportunity from row ${index}`, { error: describeError(error) });
         }
       });
 
@@ -191,7 +194,7 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
     const kanbanGroups = document.querySelectorAll('.o_kanban_group');
 
     if (kanbanGroups.length > 0) {
-      console.log(`[OpportunityExtractor] Extracting from kanban view (${kanbanGroups.length} stages)`);
+      log.debug(`Extracting from kanban view (${kanbanGroups.length} stages)`);
       
       kanbanGroups.forEach((group) => {
         try {
@@ -204,7 +207,7 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
           const stageRevenue = stageRevenueEl?.textContent?.trim() || '';
           
           if (stageRevenue) {
-            console.log(`[OpportunityExtractor] Stage "${stageName}" total revenue: ${stageRevenue}`);
+            log.debug(`Stage "${stageName}" total revenue: ${stageRevenue}`);
           }
 
           // Get all cards in this stage
@@ -217,21 +220,21 @@ export async function extractOpportunities(): Promise<Opportunity[]> {
                 opportunities.push(opportunity);
               }
             } catch (error) {
-              console.warn(`[OpportunityExtractor] Failed to extract opportunity from card ${index} in stage "${stageName}":`, error);
+              log.warn(`Failed to extract opportunity from card ${index} in stage "${stageName}"`, { error: describeError(error) });
             }
           });
         } catch (error) {
-          console.warn('[OpportunityExtractor] Failed to process kanban group:', error);
+          log.warn('Failed to process kanban group', { error: describeError(error) });
         }
       });
 
       return opportunities;
     }
 
-    console.log('[OpportunityExtractor] No list or kanban view detected');
+    log.debug('No list or kanban view detected');
 
   } catch (error) {
-    console.error('[OpportunityExtractor] Error in opportunity extraction:', error);
+    log.error('Error in opportunity extraction', { error: describeError(error) });
   }
 
   return opportunities;

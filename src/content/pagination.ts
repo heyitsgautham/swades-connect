@@ -1,4 +1,7 @@
 import { getActivityIdCacheSize, getOpportunityIdCacheSize } from './idCache';
+import { createLogger } from '../shared/logger';
+
+const log = createLogger('pagination');
 
 export interface PaginationConfig {
   maxPages?: number;        // Safety limit (default: 50)
@@ -90,7 +93,7 @@ async function navigateToFirstPage(delayMs: number): Promise<boolean> {
     // Otherwise, click previous button
     const prevButton = document.querySelector('.o_pager_previous:not(.disabled)') as HTMLButtonElement | null;
     if (!prevButton || prevButton.disabled) {
-      console.warn('[Swades Connect] Cannot navigate to first page - no previous button');
+      log.warn('Cannot navigate to first page - no previous button');
       return false;
     }
 
@@ -99,7 +102,7 @@ async function navigateToFirstPage(delayMs: number): Promise<boolean> {
     attempts++;
   }
 
-  console.warn('[Swades Connect] Failed to reach first page after max attempts');
+  log.warn('Failed to reach first page after max attempts');
   return false;
 }
 
@@ -194,10 +197,10 @@ export async function extractWithPagination<T>(
   }
 
   if (pageCount >= maxPages) {
-    console.warn(`[Swades Connect] Reached max page limit (${maxPages}). Some records may not be extracted.`);
+    log.warn(`Reached max page limit (${maxPages}). Some records may not be extracted.`);
   }
 
-  console.log(`[Swades Connect] Pagination complete: extracted ${allData.length} items from ${pageCount} pages`);
+  log.debug(`Pagination complete: extracted ${allData.length} items from ${pageCount} pages`);
   return allData;
 }
 
@@ -257,14 +260,14 @@ async function waitForRpcCachePopulation(timeout: number): Promise<void> {
       
       // Cache has grown - new IDs were added
       if (currentSize > initialSize) {
-        console.log(`[Swades Connect] RPC cache populated in ${elapsed}ms (${initialSize} → ${currentSize})`);
+        log.debug(`RPC cache populated in ${elapsed}ms (${initialSize} → ${currentSize})`);
         resolve();
         return;
       }
       
       // Timeout reached
       if (elapsed >= timeout) {
-        console.log(`[Swades Connect] RPC cache wait timeout after ${elapsed}ms (size: ${currentSize})`);
+        log.debug(`RPC cache wait timeout after ${elapsed}ms (size: ${currentSize})`);
         resolve();
         return;
       }

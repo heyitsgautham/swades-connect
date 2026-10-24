@@ -1,3 +1,7 @@
+import { createLogger, describeError } from '../shared/logger';
+
+const log = createLogger('id-cache');
+
 // ============================================================================
 // Opportunity ID Cache
 // ============================================================================
@@ -50,7 +54,7 @@ export function populateOpportunityIdCache(records: Array<Record<string, unknown
   }
   
   if (added > 0) {
-    console.log(`[Swades Connect] Cached ${added} opportunity IDs (total: ${opportunityIdCache.size})`);
+    log.debug(`Cached ${added} opportunity IDs (total: ${opportunityIdCache.size})`);
   }
 }
 
@@ -64,7 +68,7 @@ export function setOpportunityId(name: string, id: number): void {
   const normalizedName = normalizeOpportunityName(name);
   if (!opportunityIdCache.has(normalizedName)) {
     opportunityIdCache.set(normalizedName, id);
-    console.log(`[Swades Connect] Cached opportunity ID: "${name}" → ${id}`);
+    log.debug(`Cached opportunity ID: "${name}" → ${id}`);
   }
 }
 
@@ -82,7 +86,7 @@ export async function initializeOpportunityIdCacheFromStorage(): Promise<void> {
     const odooData = result.odoo_data as { opportunities?: Array<{ id: string; name: string }> } | undefined;
     
     if (!odooData?.opportunities || !Array.isArray(odooData.opportunities)) {
-      console.log('[Swades Connect] No opportunities in storage to initialize cache');
+      log.debug('No opportunities in storage to initialize cache');
       return;
     }
 
@@ -102,10 +106,10 @@ export async function initializeOpportunityIdCacheFromStorage(): Promise<void> {
     }
 
     if (added > 0) {
-      console.log(`[Swades Connect] Initialized cache with ${added} opportunity IDs from storage (total: ${opportunityIdCache.size})`);
+      log.debug(`Initialized cache with ${added} opportunity IDs from storage (total: ${opportunityIdCache.size})`);
     }
   } catch (error) {
-    console.warn('[Swades Connect] Failed to initialize opportunity ID cache from storage:', error);
+    log.warn('Failed to initialize opportunity ID cache from storage', { error: describeError(error) });
   }
 }
 

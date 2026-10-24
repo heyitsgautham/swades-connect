@@ -1,6 +1,9 @@
 import type { Activity } from '../../shared/types';
 import { lookupActivityId, initializeActivityIdCacheFromStorage } from '../idCache';
 import { generateContentHash, mapActivityType, normalizeDate, parseRelativeDate } from '../parsing';
+import { createLogger, describeError } from '../../shared/logger';
+
+const log = createLogger('extract');
 
 /**
  * Generate an activity ID, preferring real Odoo ID from cache over content hash
@@ -48,7 +51,7 @@ export async function extractActivities(): Promise<Activity[]> {
             activities.push(activity);
           }
         } catch (error) {
-          console.warn(`Failed to extract activity from row ${index}:`, error);
+          log.warn(`Failed to extract activity from row ${index}`, { error: describeError(error) });
         }
       });
       return activities;
@@ -65,12 +68,12 @@ export async function extractActivities(): Promise<Activity[]> {
             activities.push(activity);
           }
         } catch (error) {
-          console.warn(`Failed to extract activity from kanban card ${index}:`, error);
+          log.warn(`Failed to extract activity from kanban card ${index}`, { error: describeError(error) });
         }
       });
     }
   } catch (error) {
-    console.error('Error in activity extraction:', error);
+    log.error('Error in activity extraction', { error: describeError(error) });
   }
 
   return activities;
@@ -137,7 +140,7 @@ function extractActivityFromRow(row: HTMLElement, index: number): Activity | nul
       status,
     };
   } catch (error) {
-    console.warn('Error extracting activity from row:', error);
+    log.warn('Error extracting activity from row', { error: describeError(error) });
     return null;
   }
 }
@@ -238,7 +241,7 @@ function extractActivityFromKanbanCard(card: HTMLElement, index: number): Activi
       status,
     };
   } catch (error) {
-    console.warn('Error extracting activity from kanban card:', error);
+    log.warn('Error extracting activity from kanban card', { error: describeError(error) });
     return null;
   }
 }
@@ -275,7 +278,7 @@ function parseDueDate(element: HTMLElement | null): string {
     const textContent = element.textContent?.trim() || '';
     return parseRelativeDate(textContent);
   } catch (error) {
-    console.warn('Error parsing due date:', error);
+    log.warn('Error parsing due date', { error: describeError(error) });
     return '';
   }
 }

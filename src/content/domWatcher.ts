@@ -1,3 +1,7 @@
+import { createLogger } from '../shared/logger';
+
+const log = createLogger('dom-watcher');
+
 interface DOMWatcherConfig {
   onChange: () => void;
   debounceMs?: number;
@@ -60,7 +64,7 @@ export class DOMWatcher {
       });
 
       if (relevantChange) {
-        console.log('[Swades Connect] Detected actual data change (not view/filter change)');
+        log.debug('Detected actual data change (not view/filter change)');
         this.debouncedOnChange();
       }
     });
@@ -73,14 +77,14 @@ export class DOMWatcher {
       characterData: false  // Ignore text changes
     });
 
-    console.log('[Swades Connect] DOM Watcher started');
+    log.debug('DOM Watcher started');
   }
 
   stop(): void {
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
-      console.log('[Swades Connect] DOM Watcher stopped');
+      log.debug('DOM Watcher stopped');
     }
     
     if (this.debounceTimer) {
@@ -99,7 +103,7 @@ export class DOMWatcher {
     }
 
     this.debounceTimer = window.setTimeout(() => {
-      console.log('[Swades Connect] DOM change detected, triggering callback...');
+      log.debug('DOM change detected, triggering callback...');
       this.config.onChange();
       this.debounceTimer = null;
     }, this.config.debounceMs);

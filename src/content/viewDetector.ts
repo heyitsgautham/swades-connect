@@ -5,6 +5,10 @@
  * based on DOM structure and URL patterns.
  */
 
+import { createLogger, describeError } from '../shared/logger';
+
+const log = createLogger('view');
+
 // View types supported by Odoo
 export type OdooViewType = 'list' | 'kanban' | 'form' | 'activity' | 'unknown';
 
@@ -178,7 +182,7 @@ function detectModelFromDom(): OdooDataModel {
       }
     }
   } catch (error) {
-    console.warn('[viewDetector] Error detecting model from DOM:', error);
+    log.warn('Error detecting model from DOM', { error: describeError(error) });
   }
 
   return 'unknown';
@@ -201,7 +205,7 @@ export function getOdooVersion(): string {
       return odoo.__session_info__.server_version;
     }
   } catch (error) {
-    console.warn('[viewDetector] Error accessing odoo global:', error);
+    log.warn('Error accessing odoo global', { error: describeError(error) });
   }
 
   // Strategy 2: Check for data-version attribute
@@ -227,7 +231,7 @@ export function getOdooVersion(): string {
       }
     }
   } catch (error) {
-    console.warn('[viewDetector] Error parsing script content:', error);
+    log.warn('Error parsing script content', { error: describeError(error) });
   }
 
   return 'unknown';

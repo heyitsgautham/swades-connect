@@ -7,6 +7,10 @@
  * The intercepted data is sent via window.postMessage for the content script to consume.
  */
 
+import { createLogger, describeError } from '../shared/logger';
+
+const log = createLogger('interceptor');
+
 // ============================================================================
 // Type Definitions
 // ============================================================================
@@ -62,11 +66,11 @@ export function createInterceptorScript(): HTMLScriptElement {
 export function injectRpcInterceptor(): void {
   const script = createInterceptorScript();
   script.onload = () => {
-    console.log('[Swades Connect] RPC interceptor script loaded successfully');
+    log.debug('RPC interceptor script loaded successfully');
     script.remove(); // Clean up after loading
   };
   script.onerror = (error) => {
-    console.error('[Swades Connect] Failed to load RPC interceptor script:', error);
+    log.error('Failed to load RPC interceptor script', { error: describeError(error) });
   };
   (document.head || document.documentElement).appendChild(script);
 }
