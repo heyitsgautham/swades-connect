@@ -14,3 +14,15 @@ export class StorageError extends Error {
     this.context = context;
   }
 }
+
+/** A request from the popup to the service worker failed, got no reply, or got a reply in the wrong shape. */
+export class BackgroundRequestError extends Error {
+  readonly kind = 'background-request' as const;
+  readonly action: string;
+
+  constructor(message: string, action: string) {
+    super(message);
+    this.name = 'BackgroundRequestError';
+    this.action = action;
+  }
+}

@@ -45,6 +45,29 @@ const recordBatches = {
   activities: z.array(activitySchema),
 };
 
+/** Every stored record and the last sync time, as GET_DATA replies and STORAGE_UPDATED broadcasts carry them. */
+export const storedDataSchema = z.object({
+  contacts: recordBatches.contacts,
+  opportunities: recordBatches.opportunities,
+  activities: recordBatches.activities,
+  lastSync: z.number(),
+});
+
+export type StoredData = z.infer<typeof storedDataSchema>;
+
+/** The reply shape every service worker handler sends back. */
+export const messageResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.unknown().optional(),
+  error: z.string().optional(),
+});
+
+/** Broadcast from the service worker to open popups after stored data changes. */
+export const storageUpdatedMessageSchema = z.object({
+  action: z.literal('STORAGE_UPDATED'),
+  data: storedDataSchema,
+});
+
 const extractionMetadataSchema = z.object({
   viewType: z.string(),
   dataModel: z.string(),

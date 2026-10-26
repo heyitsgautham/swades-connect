@@ -1,10 +1,11 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { ToastProvider } from '../components/Toast';
 import { makeContact } from '../../test/fixtures';
 import { installPopupBackend } from '../../test/popupBackend';
+import { chromeMock } from '../../test/chromeMock';
 
 const contacts = [
   makeContact({ id: 'c1', name: 'Alex Example', email: 'alex@example.com', company: 'Acme Corp' }),
@@ -156,5 +157,23 @@ describe('App', () => {
 
     expect(screen.queryByText('Not an Odoo page')).toBeNull();
     expect(screen.getByText('No opportunities found')).toBeTruthy();
+  });
+
+  it('follows STORAGE_UPDATED broadcasts and ignores malformed ones', async () => {
+    installPopupBackend({ contacts });
+    renderPopup();
+    await screen.findByText('3 results');
+    const [listener] = chromeMock().runtime.onMessage.listeners as Set<(message: unknown) => void>;
+
+    act(() => listener({ action: 'STORAGE_UPDATED', data: { contacts: 'garbage' } }));
+    expect(rowNames()).toHaveLength(3);
+
+    act(() =>
+      listener({
+        action: 'STORAGE_UPDATED',
+        data: { contacts: [contacts[1]], opportunities: [], activities: [], lastSync: Date.now() },
+      }),
+    );
+    expect(rowNames()).toEqual(['Bea Sample']);
   });
 });

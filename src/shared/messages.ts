@@ -5,9 +5,10 @@
  * checked at runtime where it is received; the types here are inferred from them.
  */
 
-import type { Activity, Contact, Opportunity } from './types';
+import type { z } from 'zod';
+import type { storageUpdatedMessageSchema } from './schemas';
 
-export type { BackgroundMessage, ContentMessage } from './schemas';
+export type { BackgroundMessage, ContentMessage, StoredData } from './schemas';
 
 /** Record collection a message refers to. */
 export type DataType = 'contacts' | 'opportunities' | 'activities';
@@ -20,12 +21,4 @@ export interface MessageResponse {
 }
 
 /** Broadcast from the service worker to open popups after stored data changes. */
-export interface StorageUpdatedMessage {
-  action: 'STORAGE_UPDATED';
-  data: {
-    contacts: Contact[];
-    opportunities: Opportunity[];
-    activities: Activity[];
-    lastSync: number;
-  };
-}
+export type StorageUpdatedMessage = z.infer<typeof storageUpdatedMessageSchema>;
