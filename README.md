@@ -195,11 +195,13 @@ src/
 ├── injected/                 rpcInterceptor.ts helpers and the Shadow DOM indicator
 ├── popup/                    React dashboard, styled with Tailwind utility classes
 │   ├── App.tsx               header, status bar, tabs and the Settings modal
+│   ├── background.ts         popup requests to the service worker, replies checked with zod
 │   ├── activeTab.ts          sends a message to the active tab without throwing on non-Odoo pages
-│   ├── components/           tabs, DataTable, TabControls, Settings, SyncToggle, Toast
+│   ├── components/           tabs, ActivityCard, DataTable, TabControls, Settings, SyncToggle, Toast
 │   └── hooks/                useStorage, useExtraction, useSyncPreference, useSort, useExport, useToast
 ├── shared/                   types, zod schemas, storage, lock, logger, errors, export
 └── test/                     chrome mock, fixtures and Odoo markup builders
+e2e/                          Playwright specs that load dist/ in Chromium against odoo-html/
 public/
 ├── manifest.json             Manifest V3
 └── rpc-interceptor.js        runs in the page and patches fetch and XMLHttpRequest
