@@ -37,16 +37,30 @@ export interface ExtractedData {
   activities: Activity[];
 }
 
-/** Activities come from the RPC records captured while paging, not the DOM. */
+/**
+ * Activities come from the RPC records captured while paging when there are any,
+ * and from the rows on the page when the interceptor captured none.
+ */
 async function extractAllActivities(paginationConfig: PaginationConfig): Promise<Activity[]> {
   startActivityExtractionSession();
 
-  // Paging still runs so Odoo issues a web_search_read for every page.
-  await extractWithPagination<Activity>(extractActivities, paginationConfig);
+  // Paging also makes Odoo issue a web_search_read for every page, which fills the RPC records.
+  const domActivities = await extractWithPagination<Activity>(extractActivities, paginationConfig);
 
   // Odoo's default activity sort is not unique, so rows shift between pages and
-  // DOM extraction can miss some. The accumulated RPC records are authoritative.
+  // DOM extraction can miss some. The accumulated RPC records are authoritative when present.
+  // With none, for example when Odoo read the activities before the interceptor was in place,
+  // the rows on the page are the only source, and dropping them would store nothing.
   const rpcRecords = getAllActivityRecords();
+  if (rpcRecords.size === 0) {
+    if (domActivities.length > 0) {
+      log.info('No activity RPC records captured, keeping the rows read from the page', {
+        count: domActivities.length,
+      });
+    }
+    return domActivities;
+  }
+
   const activities: Activity[] = [];
   for (const record of rpcRecords.values()) {
     try {
