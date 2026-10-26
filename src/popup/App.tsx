@@ -11,17 +11,16 @@ import SyncStatus from './components/SyncStatus';
 import ExtractButton from './components/ExtractButton';
 import Settings from './components/Settings';
 import { createLogger } from '../shared/logger';
+import type { DataType } from '../shared/messages';
 import './index.css';
 import './App.css';
-
-type TabType = 'contacts' | 'opportunities' | 'activities';
 
 const log = createLogger('popup');
 
 const bannerClassName = 'mx-4 my-2 flex items-center gap-2 border-l-4 px-4 py-3 text-[12px] font-medium';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('contacts');
+  const [activeTab, setActiveTab] = useState<DataType>('contacts');
   const [showSettings, setShowSettings] = useState(false);
   const {
     data,
@@ -42,7 +41,7 @@ function App() {
   } = useExtraction();
   const { showToast } = useToast();
 
-  const handleTabChange = (tab: TabType) => {
+  const handleTabChange = (tab: DataType) => {
     setActiveTab(tab);
     clearState();
   };
@@ -53,7 +52,7 @@ function App() {
   };
 
   // Optimistic delete handler with rollback support
-  const handleOptimisticDelete = async (type: 'contacts' | 'opportunities' | 'activities', id: string) => {
+  const handleOptimisticDelete = async (type: DataType, id: string) => {
     // 1. Optimistically remove from UI and get rollback function
     const rollback = optimisticDelete(type, id);
 
@@ -72,7 +71,7 @@ function App() {
   };
 
   // Delete all handler
-  const handleDeleteAll = async (type: 'contacts' | 'opportunities' | 'activities') => {
+  const handleDeleteAll = async (type: DataType) => {
     const count = data?.[type]?.length || 0;
     if (count === 0) return;
 

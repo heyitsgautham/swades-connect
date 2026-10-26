@@ -2,12 +2,10 @@ import type { StorageSchema, Contact, Opportunity, Activity } from './types';
 import { waitForLock, releaseLock } from './lock';
 import { StorageError } from './errors';
 import { createLogger } from './logger';
-import { activitySchema, contactSchema, opportunitySchema } from './schemas';
+import { activitySchema, contactSchema, opportunitySchema, type DataType } from './schemas';
 
 const STORAGE_KEY = 'odoo_data';
 
-// Type alias for record types
-type RecordType = 'contacts' | 'opportunities' | 'activities';
 type RecordData = Contact | Opportunity | Activity;
 
 const DEFAULT_DATA: StorageSchema['odoo_data'] = {
@@ -29,7 +27,7 @@ const RECORD_SCHEMAS = {
  * Keep the stored records of one type that match its schema.
  * A missing or non-array value reads as no records, so one bad entry never breaks a read.
  */
-function readRecords<T extends RecordType>(type: T, value: unknown): StorageSchema['odoo_data'][T] {
+function readRecords<T extends DataType>(type: T, value: unknown): StorageSchema['odoo_data'][T] {
   if (!Array.isArray(value)) return [];
   const schema = RECORD_SCHEMAS[type];
   const valid = value.flatMap((item) => {
@@ -83,7 +81,7 @@ export async function saveData(
 }
 
 // Delete individual record
-export async function deleteRecord(type: 'contacts' | 'opportunities' | 'activities', id: string): Promise<void> {
+export async function deleteRecord(type: DataType, id: string): Promise<void> {
   const existing = await getData();
 
   if (type === 'contacts') {
@@ -98,7 +96,7 @@ export async function deleteRecord(type: 'contacts' | 'opportunities' | 'activit
 }
 
 // Delete all records of a specific type
-export async function deleteAllRecords(type: 'contacts' | 'opportunities' | 'activities'): Promise<void> {
+export async function deleteAllRecords(type: DataType): Promise<void> {
   const existing = await getData();
 
   if (type === 'contacts') {
@@ -135,7 +133,7 @@ export interface UpsertResult {
 
 // Upsert one or more records by ID (with locking)
 // For partial updates, merges new fields with existing record data
-export async function upsertRecords(type: RecordType, records: RecordData[]): Promise<UpsertResult> {
+export async function upsertRecords(type: DataType, records: RecordData[]): Promise<UpsertResult> {
   if (records.length === 0) {
     return { added: 0, updated: 0 };
   }
@@ -277,7 +275,7 @@ export async function upsertUpgradingHashIds(
 }
 
 // Delete multiple records by ID array (with locking)
-export async function deleteRecordsById(type: RecordType, ids: string[]): Promise<number> {
+export async function deleteRecordsById(type: DataType, ids: string[]): Promise<number> {
   if (ids.length === 0) {
     return 0;
   }

@@ -1,14 +1,13 @@
 import { Users, Briefcase, Calendar } from 'lucide-react';
-
-type TabType = 'contacts' | 'opportunities' | 'activities';
+import type { DataType } from '../../shared/messages';
 
 interface TabNavigationProps {
-  activeTab: TabType;
-  onTabChange: (tab: TabType) => void;
+  activeTab: DataType;
+  onTabChange: (tab: DataType) => void;
 }
 
 function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
-  const tabs: { id: TabType; label: string; Icon: typeof Users }[] = [
+  const tabs: { id: DataType; label: string; Icon: typeof Users }[] = [
     { id: 'contacts', label: 'Contacts', Icon: Users },
     { id: 'opportunities', label: 'Opportunities', Icon: Briefcase },
     { id: 'activities', label: 'Activities', Icon: Calendar },

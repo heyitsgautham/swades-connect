@@ -8,10 +8,7 @@
 import type { z } from 'zod';
 import type { storageUpdatedMessageSchema } from './schemas';
 
-export type { BackgroundMessage, ContentMessage, StoredData } from './schemas';
-
-/** Record collection a message refers to. */
-export type DataType = 'contacts' | 'opportunities' | 'activities';
+export type { BackgroundMessage, ContentMessage, DataType, StoredData } from './schemas';
 
 /** Every reply sent through sendResponse. */
 export interface MessageResponse {

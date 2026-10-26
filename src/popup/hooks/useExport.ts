@@ -1,10 +1,11 @@
 import { downloadFile } from '../../shared/download';
-import { exportData, exportFile, type ExportFormat, type ExportType } from '../../shared/export';
+import { exportData, exportFile, type ExportFormat } from '../../shared/export';
+import type { DataType } from '../../shared/messages';
 import type { Activity, Contact, Opportunity } from '../../shared/types';
 import { useToast } from './useToast';
 
 /** Download every record of one type as CSV or JSON and confirm with a toast. */
-export function useExport(type: ExportType, records: Contact[] | Opportunity[] | Activity[]) {
+export function useExport(type: DataType, records: Contact[] | Opportunity[] | Activity[]) {
   const { showToast } = useToast();
 
   return (format: ExportFormat) => {

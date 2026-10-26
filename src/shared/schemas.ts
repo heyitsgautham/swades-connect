@@ -12,6 +12,9 @@ import type { Activity, Contact, Opportunity } from './types';
 
 export const dataTypeSchema = z.enum(['contacts', 'opportunities', 'activities']);
 
+/** Record collection a message or a stored list refers to. */
+export type DataType = z.infer<typeof dataTypeSchema>;
+
 export const contactSchema = z.object({
   id: z.string().min(1),
   name: z.string(),

@@ -1,6 +1,6 @@
+import type { DataType } from './schemas';
 import type { Contact, Opportunity, Activity } from './types';
 
-export type ExportType = 'contacts' | 'opportunities' | 'activities';
 export type ExportFormat = 'csv' | 'json';
 type Row = Record<string, string | number | undefined>;
 
@@ -20,7 +20,7 @@ function toCSV(rows: Row[]): string {
   return csvRows.join('\n');
 }
 
-export function exportCSV(type: ExportType, data: Contact[] | Opportunity[] | Activity[]): string {
+export function exportCSV(type: DataType, data: Contact[] | Opportunity[] | Activity[]): string {
   switch (type) {
     case 'contacts':
       return toCSV(
@@ -60,24 +60,16 @@ export function exportCSV(type: ExportType, data: Contact[] | Opportunity[] | Ac
   }
 }
 
-export function exportJSON(_type: ExportType, data: Contact[] | Opportunity[] | Activity[]): string {
+export function exportJSON(_type: DataType, data: Contact[] | Opportunity[] | Activity[]): string {
   return JSON.stringify(data, null, 2);
 }
 
-export function exportData(
-  type: ExportType,
-  data: Contact[] | Opportunity[] | Activity[],
-  format: ExportFormat,
-): string {
+export function exportData(type: DataType, data: Contact[] | Opportunity[] | Activity[], format: ExportFormat): string {
   return format === 'csv' ? exportCSV(type, data) : exportJSON(type, data);
 }
 
 /** File name and MIME type for a download, for example swades-contacts-1768903200000.csv. */
-export function exportFile(
-  type: ExportType,
-  format: ExportFormat,
-  now = Date.now(),
-): { filename: string; mime: string } {
+export function exportFile(type: DataType, format: ExportFormat, now = Date.now()): { filename: string; mime: string } {
   return {
     filename: `swades-${type}-${now}.${format}`,
     mime: format === 'csv' ? 'text/csv' : 'application/json',
