@@ -95,13 +95,15 @@ Tests use Vitest under jsdom and live next to the code in `__tests__/` folders.
 | Chrome mock | `src/test/chromeMock.ts` | In-memory `chrome.storage.local` and `session` that clone values like the real API, plus `runtime`, `tabs` and `action` spies; `src/test/setup.ts` installs a fresh one before every test |
 | Record fixtures | `src/test/fixtures.ts` | Synthetic contacts, opportunities and activities on `example.com` addresses |
 | Odoo markup builders | `src/test/odooDom.ts` | Small list and kanban fragments with only the selectors the extractors read |
+| Popup backend | `src/test/popupBackend.ts` | Answers the popup's `GET_DATA`, `DELETE_RECORD`, `DELETE_ALL_RECORDS` and `EXTRACT_DATA` messages from in-memory records, on a later task as Chrome does |
 
 All test data is invented.
 The saved pages under `odoo-html/` are for manual testing in the browser and no test reads them.
 
-Coverage covers `src/shared`, `src/content`, `src/background` and `src/injected`.
-CI fails if it drops below 75% of statements, functions and lines or 70% of branches.
-The React popup is outside the coverage numbers; its shared tab controls and sort helper have their own specs.
+Popup specs render the real components with React Testing Library and drive them with `user-event`, the way a user clicks and types.
+
+Coverage covers every file under `src/`, the React popup included, except tests, test helpers and `src/popup/main.tsx`.
+CI fails if it drops below 80% of statements and lines, 85% of functions or 75% of branches.
 
 ## Docker
 
