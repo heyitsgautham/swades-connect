@@ -7,52 +7,22 @@ interface SearchBoxProps {
 
 function SearchBox({ placeholder, value, onChange, count }: SearchBoxProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        position: 'relative',
-      }}
-    >
+    <div className="relative flex items-center gap-2">
       <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{
-          flex: 1,
-          padding: '8px 12px',
-          border: '1px solid var(--color-border)',
-          borderRadius: '0px',
-          fontSize: '12px',
-          outline: 'none',
-          fontFamily: 'inherit',
-        }}
+        className="flex-1 border border-border px-3 py-2 text-[12px] outline-none"
       />
-      <span
-        style={{
-          fontSize: '11px',
-          color: 'var(--color-text-secondary)',
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <span className="text-[11px] whitespace-nowrap text-muted">
         {count} result{count !== 1 ? 's' : ''}
       </span>
       {value && (
         <button
           onClick={() => onChange('')}
           title="Clear search"
-          style={{
-            position: 'absolute',
-            right: '70px',
-            background: 'none',
-            border: 'none',
-            color: 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            padding: '4px',
-            fontSize: '14px',
-          }}
+          className="absolute right-[70px] cursor-pointer p-1 text-[14px] text-muted"
         >
           ✕
         </button>

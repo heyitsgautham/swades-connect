@@ -4,7 +4,7 @@ import type { Opportunity } from '../../shared/types';
 import DataTable from './DataTable';
 import SearchBox from './SearchBox';
 import { EmptyState, ExportBar, FilterRow, FilterSelect } from './TabControls';
-import { fieldStyle } from './controlStyles';
+import { fieldClassName } from './controlStyles';
 import { useExport } from '../hooks/useExport';
 import { useSort } from '../hooks/useSort';
 
@@ -14,7 +14,7 @@ interface OpportunitiesTabProps {
   onDeleteAll: () => void;
 }
 
-const probabilityInputStyle = { ...fieldStyle, width: '60px' };
+const probabilityInputClassName = `${fieldClassName} w-[60px]`;
 
 function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: OpportunitiesTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,9 +68,9 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
           placeholder="Min %"
           value={probMin}
           onChange={(e) => setProbMin(e.target.value)}
-          style={probabilityInputStyle}
+          className={probabilityInputClassName}
         />
-        <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>to</span>
+        <span className="text-[12px] text-muted">to</span>
         <input
           type="number"
           min="0"
@@ -78,7 +78,7 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
           placeholder="Max %"
           value={probMax}
           onChange={(e) => setProbMax(e.target.value)}
-          style={probabilityInputStyle}
+          className={probabilityInputClassName}
         />
       </FilterRow>
 

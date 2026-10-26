@@ -1,14 +1,15 @@
-import type { CSSProperties } from 'react';
+// Tailwind class lists shared by the popup's inputs and buttons.
 
-// Input styles shared by the tab filter controls.
+/** Text and number inputs in the tab filter rows. */
+export const fieldClassName = 'flex-1 border border-border px-2 py-1.5 text-[12px] outline-none';
 
-export const fieldStyle: CSSProperties = {
-  flex: 1,
-  padding: '6px 8px',
-  border: '1px solid var(--color-border)',
-  borderRadius: '0px',
-  fontSize: '12px',
-  outline: 'none',
-};
+/** Selects in the tab filter rows. */
+export const selectClassName = `${fieldClassName} cursor-pointer`;
 
-export const selectStyle: CSSProperties = { ...fieldStyle, cursor: 'pointer' };
+/** The red gradient buttons, Extract Now and Delete All. They grow on hover and shrink while pressed. */
+export function primaryButtonClassName(disabled: boolean): string {
+  const state = disabled
+    ? 'cursor-not-allowed bg-[#6b7280]'
+    : 'cursor-pointer bg-[linear-gradient(to_right,#8B2E2E,#A03535)] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:scale-[1.02] hover:shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)] active:scale-95';
+  return `flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-white [transition:all_0.2s_ease] ${state}`;
+}

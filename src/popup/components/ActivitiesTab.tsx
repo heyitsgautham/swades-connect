@@ -3,7 +3,7 @@ import { Phone, Users, Mail, CheckSquare, FileText, Calendar, Trash2 } from 'luc
 import type { Activity } from '../../shared/types';
 import SearchBox from './SearchBox';
 import { EmptyState, ExportBar, FilterRow, FilterSelect } from './TabControls';
-import { selectStyle } from './controlStyles';
+import { selectClassName } from './controlStyles';
 import { useExport } from '../hooks/useExport';
 import { useSort } from '../hooks/useSort';
 
@@ -94,7 +94,7 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
       />
 
       <FilterRow label="Sort by:">
-        <select value={sortKey} onChange={(e) => handleSort(e.target.value)} style={selectStyle}>
+        <select value={sortKey} onChange={(e) => handleSort(e.target.value)} className={selectClassName}>
           {sortOptions.map((opt) => (
             <option key={opt.key} value={opt.key}>
               {opt.label}

@@ -15,13 +15,7 @@ function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   ];
 
   return (
-    <nav
-      style={{
-        display: 'flex',
-        borderBottom: '2px solid var(--color-border)',
-        background: '#fafbfc',
-      }}
-    >
+    <nav className="flex border-b-2 border-border bg-[#fafbfc]">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -29,23 +23,11 @@ function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             title={tab.label}
-            style={{
-              flex: 1,
-              padding: '12px 8px',
-              border: 'none',
-              background: isActive ? 'var(--color-accent)' : 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px',
-              color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-              fontSize: '12px',
-              fontWeight: isActive ? 600 : 500,
-              borderBottom: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
-              marginBottom: '-2px',
-              transition: 'all 0.2s ease',
-            }}
+            className={`-mb-0.5 flex flex-1 cursor-pointer flex-col items-center gap-1 border-b-2 px-2 py-3 text-[12px] [transition:all_0.2s_ease] ${
+              isActive
+                ? 'border-primary bg-accent font-semibold text-primary'
+                : 'border-transparent bg-transparent font-medium text-muted'
+            }`}
           >
             <tab.Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
             <span>{tab.label}</span>
