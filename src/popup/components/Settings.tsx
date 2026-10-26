@@ -14,13 +14,26 @@ function Settings({ onClose }: SettingsProps) {
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(0,0,0,0.5)]">
-      <div className="w-[400px] max-w-[90%] rounded-lg bg-background p-6 shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-title"
+        className="w-[400px] max-w-[90%] rounded-lg bg-background p-6 shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
+      >
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SettingsIcon size={20} className="text-primary" />
-            <h2 className="text-[18px] font-semibold">Settings</h2>
+            <h2 id="settings-title" className="text-[18px] font-semibold">
+              Settings
+            </h2>
           </div>
-          <button onClick={onClose} className="flex cursor-pointer items-center p-1 text-muted">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close settings"
+            title="Close"
+            className="flex cursor-pointer items-center p-1 text-muted"
+          >
             <X size={20} />
           </button>
         </div>

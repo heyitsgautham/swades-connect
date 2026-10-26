@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 interface SyncToggleProps {
@@ -28,6 +28,9 @@ function SyncToggle({
   onClassName,
   tintClassName,
 }: SyncToggleProps) {
+  const labelId = useId();
+  const descriptionId = useId();
+
   return (
     <div
       className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${
@@ -37,13 +40,22 @@ function SyncToggle({
       <div className="flex-1">
         <div className="mb-1 flex items-center gap-1.5">
           <Icon size={14} className={iconClassName} />
-          <label className="text-[14px] font-medium text-text">{label}</label>
+          <label id={labelId} className="text-[14px] font-medium text-text">
+            {label}
+          </label>
           {badge}
         </div>
-        <p className="text-[12px] leading-[1.4] text-muted">{description}</p>
+        <p id={descriptionId} className="text-[12px] leading-[1.4] text-muted">
+          {description}
+        </p>
       </div>
 
       <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
         onClick={onToggle}
         className={`relative h-6 w-12 shrink-0 cursor-pointer rounded-[12px] [transition:background-color_0.2s] ${
           enabled ? onClassName : 'bg-[#d1d5db]'

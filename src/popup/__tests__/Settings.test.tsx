@@ -6,11 +6,10 @@ import { chromeMock } from '../../test/chromeMock';
 
 const ACTIVE_TAB = { id: 42 } as chrome.tabs.Tab;
 
-// The modal renders the close button first, then the Real-time Sync and Auto-Extract toggles.
-const toggles = () => {
-  const [, rpcSync, autoExtract] = screen.getAllByRole('button');
-  return { rpcSync, autoExtract };
-};
+const toggles = () => ({
+  rpcSync: screen.getByRole('switch', { name: 'Real-time Sync' }),
+  autoExtract: screen.getByRole('switch', { name: 'Auto-Extract' }),
+});
 
 function renderSettings({
   tabs = [ACTIVE_TAB],
@@ -26,6 +25,16 @@ function renderSettings({
 }
 
 describe('Settings', () => {
+  it('is a labelled dialog whose switches report their state', async () => {
+    renderSettings({ stored: { auto_extract_enabled: true } });
+
+    expect(screen.getByRole('dialog', { name: 'Settings' })).toBeTruthy();
+    await waitFor(() => expect(toggles().autoExtract.getAttribute('aria-checked')).toBe('true'));
+    expect(toggles().rpcSync.getAttribute('aria-checked')).toBe('false');
+    expect(toggles().autoExtract.getAttribute('aria-describedby')).toBeTruthy();
+    expect(screen.getByText(/Monitors DOM changes/).id).toBe(toggles().autoExtract.getAttribute('aria-describedby'));
+  });
+
   it('shows the status note for each preference already stored', async () => {
     renderSettings({ stored: { rpc_sync_enabled: true } });
     expect(await screen.findByText(/Real-time Sync is ON/)).toBeTruthy();
@@ -38,6 +47,7 @@ describe('Settings', () => {
     await user.click(toggles().autoExtract);
 
     expect(chrome.storage.local.set).toHaveBeenCalledWith({ auto_extract_enabled: true });
+    expect(toggles().autoExtract.getAttribute('aria-checked')).toBe('true');
     await waitFor(() =>
       expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(42, { action: 'TOGGLE_AUTO_EXTRACT', enabled: true }),
     );
@@ -89,7 +99,7 @@ describe('Settings', () => {
   it('closes from the X button', async () => {
     const user = userEvent.setup();
     const { onClose } = renderSettings();
-    await user.click(screen.getAllByRole('button')[0]);
+    await user.click(screen.getByRole('button', { name: 'Close settings' }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 });
