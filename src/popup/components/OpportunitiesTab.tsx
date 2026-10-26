@@ -45,7 +45,7 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
   const { sorted: sortedOpportunities, sortKey, sortDirection, handleSort } = useSort(filteredOpportunities);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="flex flex-col gap-3">
       <SearchBox
         placeholder="Search by name or stage..."
         value={searchQuery}

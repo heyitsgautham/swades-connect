@@ -1,5 +1,6 @@
 import { Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Contact, Opportunity, Activity } from '../../shared/types';
+import { deleteIconButtonClassName } from './controlStyles';
 
 // Union type for all supported row types
 type DataRow = Contact | Opportunity | Activity;
@@ -96,7 +97,7 @@ function DataTable({ columns, data, onDelete, sortKey, sortDirection, onSort }: 
                     }
                   }}
                   title="Delete this record"
-                  className="flex cursor-pointer items-center justify-center rounded-full bg-transparent p-1.5 text-[#9ca3af] [transition:all_0.2s_ease] hover:bg-[#fef2f2] hover:text-[#dc2626]"
+                  className={deleteIconButtonClassName}
                 >
                   <Trash2 size={16} />
                 </button>

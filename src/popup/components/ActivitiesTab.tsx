@@ -3,7 +3,7 @@ import { Phone, Users, Mail, CheckSquare, FileText, Calendar, Trash2 } from 'luc
 import type { Activity } from '../../shared/types';
 import SearchBox from './SearchBox';
 import { EmptyState, ExportBar, FilterRow, FilterSelect } from './TabControls';
-import { selectClassName } from './controlStyles';
+import { deleteIconButtonClassName, selectClassName } from './controlStyles';
 import { useExport } from '../hooks/useExport';
 import { useSort } from '../hooks/useSort';
 
@@ -61,7 +61,7 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="flex flex-col gap-3">
       <SearchBox
         placeholder="Search by summary, type, or assignee..."
         value={searchQuery}
@@ -104,15 +104,7 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
         {sortKey && (
           <button
             onClick={toggleDirection}
-            style={{
-              padding: '6px 10px',
-              border: '1px solid var(--color-border)',
-              borderRadius: '0px',
-              fontSize: '12px',
-              background: 'transparent',
-              cursor: 'pointer',
-              color: 'var(--color-text)',
-            }}
+            className="cursor-pointer border border-border bg-transparent px-2.5 py-1.5 text-[12px] text-text"
           >
             {sortDirection === 'asc' ? '▲ Asc' : '▼ Desc'}
           </button>
@@ -132,49 +124,19 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
           }
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {sortedActivities.map((activity) => (
             <div
               key={activity.id}
-              style={{
-                border: '1px solid rgba(0, 0, 0, 0.08)',
-                borderRadius: '8px',
-                padding: '12px',
-                background: '#ffffff',
-                position: 'relative',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-                transition: 'box-shadow 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.12)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.08)';
-              }}
+              className="relative rounded-lg border border-[rgba(0,0,0,0.08)] bg-white p-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] [transition:box-shadow_0.2s_ease] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ display: 'flex', alignItems: 'center' }}>{getActivityIcon(activity.type)}</span>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="flex items-center">{getActivityIcon(activity.type)}</span>
+                <span className="flex-1 truncate font-semibold text-text">{activity.summary}</span>
                 <span
-                  style={{
-                    flex: 1,
-                    fontWeight: 600,
-                    color: 'var(--color-text)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {activity.summary}
-                </span>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    padding: '2px 6px',
-                    fontWeight: 600,
-                    background: activity.status === 'open' ? '#dbeafe' : '#dcfce7',
-                    color: activity.status === 'open' ? '#1e40af' : '#166534',
-                    borderRadius: '4px',
-                  }}
+                  className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${
+                    activity.status === 'open' ? 'bg-[#dbeafe] text-[#1e40af]' : 'bg-[#dcfce7] text-[#166534]'
+                  }`}
                 >
                   {activity.status}
                 </span>
@@ -185,40 +147,12 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
                     }
                   }}
                   title="Remove from storage"
-                  style={{
-                    padding: '6px',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: '9999px',
-                    cursor: 'pointer',
-                    color: '#9ca3af',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#dc2626';
-                    e.currentTarget.style.background = '#fef2f2';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#9ca3af';
-                    e.currentTarget.style.background = 'transparent';
-                  }}
+                  className={deleteIconButtonClassName}
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                  fontSize: '11px',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
+              <div className="flex flex-col gap-1 text-[11px] text-muted">
                 <span>Type: {activity.type}</span>
                 <span>Due: {activity.dueDate || 'No date'}</span>
                 <span>Assigned: {activity.assignedTo || 'Unassigned'}</span>

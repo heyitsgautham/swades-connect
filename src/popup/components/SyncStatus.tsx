@@ -41,20 +41,7 @@ function SyncStatus({ lastSync }: SyncStatusProps) {
   const syncText = useMemo(() => formatTimeDiff(lastSync, now), [lastSync, now]);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        fontSize: '12px',
-        fontWeight: 500,
-        color: 'var(--color-text-secondary)',
-        background: 'rgba(255, 255, 255, 0.5)',
-        padding: '6px 12px',
-        borderRadius: '9999px',
-        border: '1px solid var(--color-border)',
-      }}
-    >
+    <div className="flex items-center gap-1.5 rounded-full border border-border bg-[rgba(255,255,255,0.5)] px-3 py-1.5 text-[12px] font-medium text-muted">
       <RefreshCw size={12} />
       <span>Last sync: {syncText}</span>
     </div>

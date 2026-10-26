@@ -40,45 +40,16 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
     <div
       role="alert"
       aria-live="polite"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '12px 16px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-        background: isSuccess ? 'var(--color-success, #16a34a)' : 'var(--color-error, #dc2626)',
-        color: 'white',
-        fontSize: '13px',
-        fontWeight: 500,
-        minWidth: '200px',
-        maxWidth: '350px',
-        opacity: isVisible && !isLeaving ? 1 : 0,
-        transform: isVisible && !isLeaving ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'opacity 0.3s ease, transform 0.3s ease',
-        pointerEvents: 'auto',
-      }}
+      className={`pointer-events-auto flex max-w-[350px] min-w-[200px] items-center gap-2.5 rounded-lg px-4 py-3 text-[13px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.15)] [transition:opacity_0.3s_ease,transform_0.3s_ease] ${
+        isSuccess ? 'bg-success' : 'bg-error'
+      } ${isVisible && !isLeaving ? 'opacity-100 [transform:translateX(0)]' : 'opacity-0 [transform:translateX(100%)]'}`}
     >
-      <Icon size={18} style={{ flexShrink: 0 }} />
-      <span style={{ flex: 1, lineHeight: 1.4 }}>{toast.message}</span>
+      <Icon size={18} className="shrink-0" />
+      <span className="flex-1 leading-[1.4]">{toast.message}</span>
       <button
         onClick={handleManualDismiss}
         aria-label="Dismiss notification"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          color: 'white',
-          cursor: 'pointer',
-          padding: '2px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: 0.8,
-          transition: 'opacity 0.2s',
-          flexShrink: 0,
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-        onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+        className="flex shrink-0 cursor-pointer items-center justify-center bg-transparent p-0.5 text-white opacity-80 [transition:opacity_0.2s] hover:opacity-100"
       >
         <X size={16} />
       </button>
@@ -96,19 +67,7 @@ function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   if (toasts.length === 0) return null;
 
   return (
-    <div
-      aria-label="Notifications"
-      style={{
-        position: 'fixed',
-        top: '16px',
-        right: '16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        zIndex: 9999,
-        pointerEvents: 'none',
-      }}
-    >
+    <div aria-label="Notifications" className="pointer-events-none fixed top-4 right-4 z-[9999] flex flex-col gap-2">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
       ))}

@@ -41,7 +41,7 @@ function ContactsTab({ contacts, onDelete, onDeleteAll }: ContactsTabProps) {
   const { sorted: sortedContacts, sortKey, sortDirection, handleSort } = useSort(filteredContacts);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="flex flex-col gap-3">
       <SearchBox
         placeholder="Search by name, email, phone, or company..."
         value={searchQuery}
