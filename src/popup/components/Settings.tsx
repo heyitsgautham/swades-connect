@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Settings as SettingsIcon, X, Zap, Eye } from 'lucide-react';
 import { useSyncPreference } from '../hooks/useSyncPreference';
 import SyncToggle from './SyncToggle';
@@ -11,6 +12,15 @@ const badgeClassName = 'rounded px-1.5 py-0.5 text-[10px]';
 function Settings({ onClose }: SettingsProps) {
   const [rpcSync, toggleRpcSync] = useSyncPreference('rpcSync');
   const [autoExtract, toggleAutoExtract] = useSyncPreference('autoExtract');
+
+  // Escape closes the modal, as it does any dialog.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(0,0,0,0.5)]">

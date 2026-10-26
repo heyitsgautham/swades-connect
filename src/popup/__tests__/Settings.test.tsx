@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import Settings from '../components/Settings';
@@ -101,5 +101,20 @@ describe('Settings', () => {
     const { onClose } = renderSettings();
     await user.click(screen.getByRole('button', { name: 'Close settings' }));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('closes on Escape', async () => {
+    const user = userEvent.setup();
+    const { onClose } = renderSettings();
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('stops listening for Escape once closed', async () => {
+    const user = userEvent.setup();
+    const { onClose } = renderSettings();
+    cleanup();
+    await user.keyboard('{Escape}');
+    expect(onClose).not.toHaveBeenCalled();
   });
 });
