@@ -81,7 +81,7 @@ export function createChromeMock() {
       lastError: undefined as chrome.runtime.LastError | undefined,
       sendMessage: vi.fn((_message: unknown, callback?: (response: unknown) => void) => {
         callback?.(undefined);
-        return Promise.resolve(undefined);
+        return Promise.resolve(undefined as unknown);
       }),
       onMessage: createEvent(),
       getURL: vi.fn((path: string) => `chrome-extension://test-extension-id/${path}`),

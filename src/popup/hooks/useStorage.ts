@@ -28,8 +28,9 @@ export function useStorage(): UseStorageReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Only the first load shows the loading screen. A refresh after a delete or an extraction
+  // keeps the tabs mounted, so their search and filter state survives.
   const fetchData = useCallback(() => {
-    setLoading(true);
     chrome.runtime.sendMessage({ action: 'GET_DATA' }, (response) => {
       if (chrome.runtime.lastError) {
         setError(chrome.runtime.lastError.message || 'Unknown error');
@@ -48,21 +49,7 @@ export function useStorage(): UseStorageReturn {
 
   // Listen for storage changes and fetch initial data
   useEffect(() => {
-    // Initial fetch - chrome.runtime.sendMessage uses callbacks, so setState is in callback
-    chrome.runtime.sendMessage({ action: 'GET_DATA' }, (response) => {
-      if (chrome.runtime.lastError) {
-        setError(chrome.runtime.lastError.message || 'Unknown error');
-        setLoading(false);
-        return;
-      }
-      if (response?.success) {
-        setData(response.data);
-        setError(null);
-      } else {
-        setError(response?.error || 'Failed to fetch data');
-      }
-      setLoading(false);
-    });
+    fetchData();
 
     // Listen for storage changes from service worker
     const handleMessage = (message: { action: string; data?: StorageData }) => {
@@ -76,7 +63,7 @@ export function useStorage(): UseStorageReturn {
     return () => {
       chrome.runtime.onMessage.removeListener(handleMessage);
     };
-  }, []);
+  }, [fetchData]);
 
   const deleteRecord = useCallback(
     async (type: 'contacts' | 'opportunities' | 'activities', id: string): Promise<DeleteResult> => {

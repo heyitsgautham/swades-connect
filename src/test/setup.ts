@@ -1,3 +1,4 @@
+import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { installChromeMock } from './chromeMock';
 
@@ -7,6 +8,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   vi.useRealTimers();
   vi.restoreAllMocks();
   document.body.innerHTML = '';
