@@ -16,6 +16,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "check": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test:coverage && pnpm run build",
     "fresh-check": "rm -rf node_modules dist coverage && pnpm install --frozen-lockfile && pnpm run check",
     "format": "prettier --write .",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.7.1",
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "1.64.0",
     "@tailwindcss/vite": "4.3.3",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",

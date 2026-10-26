@@ -27,6 +27,7 @@ To see debug logs, run `chrome.storage.local.set({ log_level: 'debug' })` in the
 - Test popup components with React Testing Library and `user-event`, and answer their messages with `installPopupBackend` from `src/test/popupBackend.ts`.
 - Test data must be invented. Never paste a real Odoo page or a real person's contact details into a fixture.
 - A bug fix lands with a test that fails without the fix.
+- A change to extraction or to the popup should keep `pnpm run build && pnpm run test:e2e` passing; the saved pages in `odoo-html/` are its fixtures, and they hold placeholder data only.
 - Coverage thresholds live in `vitest.config.ts`. Raise them when coverage grows; never lower them to make CI pass.
 
 ## Code

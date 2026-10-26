@@ -30,3 +30,7 @@ prd.md
 repos/*
 docs/*
 coverage/
+
+# Playwright
+test-results/
+playwright-report/

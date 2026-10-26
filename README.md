@@ -89,6 +89,7 @@ CI's Docker build job runs that same target on every push.
 | `pnpm test` | Vitest in watch mode |
 | `pnpm run test:run` | The test suite once |
 | `pnpm run test:coverage` | The test suite once with V8 coverage; fails below the thresholds in `vitest.config.ts` |
+| `pnpm run test:e2e` | Playwright end-to-end tests against the built `dist/`; run `pnpm run build` first |
 | `pnpm run check` | lint, format:check, typecheck, test:coverage and build in sequence |
 | `pnpm run fresh-check` | Deletes `node_modules`, `dist` and `coverage`, reinstalls from the lockfile, then runs `check` |
 
@@ -104,12 +105,26 @@ Tests use Vitest under jsdom and live next to the code in `__tests__/` folders.
 | Popup backend | `src/test/popupBackend.ts` | Answers the popup's `GET_DATA`, `DELETE_RECORD`, `DELETE_ALL_RECORDS` and `EXTRACT_DATA` messages from in-memory records, on a later task as Chrome does |
 
 All test data is invented.
-The saved pages under `odoo-html/` are for manual testing in the browser and no test reads them.
+The unit tests never read the saved pages under `odoo-html/`; only the end-to-end tests below do.
 
 Popup specs render the real components with React Testing Library and drive them with `user-event`, the way a user clicks and types.
 
 Coverage covers every file under `src/`, the React popup included, except tests, test helpers and `src/popup/main.tsx`.
 CI fails if it drops below 80% of statements and lines, 85% of functions or 75% of branches.
+
+### End-to-end tests
+
+`e2e/` loads the built `dist/` as an unpacked extension in headless Chromium through Playwright.
+A small HTTPS server serves the saved pages in `odoo-html/` as `demo.odoo.com`, with a self-signed certificate made by `openssl` for the run, because the manifest only matches `https://*.odoo.com/*`.
+The specs extract from each saved list and kanban page and check the records the service worker stores, then drive the real popup to delete a contact and flip a Settings switch.
+
+```bash
+pnpm exec playwright install chromium   # once
+pnpm run build
+pnpm run test:e2e
+```
+
+CI runs them in their own job on every push.
 
 ## Docker
 

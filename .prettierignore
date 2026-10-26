@@ -4,3 +4,5 @@ out
 odoo-html
 pnpm-lock.yaml
 *.md
+test-results
+playwright-report

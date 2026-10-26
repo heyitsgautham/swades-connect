@@ -6,3 +6,5 @@ coverage
 odoo-html
 *.log
 .DS_Store
+test-results
+playwright-report
