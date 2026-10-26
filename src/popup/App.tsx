@@ -10,10 +10,13 @@ import ActivitiesTab from './components/ActivitiesTab';
 import SyncStatus from './components/SyncStatus';
 import ExtractButton from './components/ExtractButton';
 import Settings from './components/Settings';
+import { createLogger } from '../shared/logger';
 import './index.css';
 import './App.css';
 
 type TabType = 'contacts' | 'opportunities' | 'activities';
+
+const log = createLogger('popup');
 
 const bannerClassName = 'mx-4 my-2 flex items-center gap-2 border-l-4 px-4 py-3 text-[12px] font-medium';
 
@@ -63,6 +66,7 @@ function App() {
     } else {
       // 4. Rollback on failure and show error toast
       rollback();
+      log.warn('Delete failed, restored the record', { type, id, error: result.error });
       showToast({ type: 'error', message: `Failed to delete. Restored item.` });
     }
   };
@@ -81,6 +85,7 @@ function App() {
     if (result.success) {
       showToast({ type: 'success', message: `Deleted all ${count} ${type}` });
     } else {
+      log.warn('Delete all failed', { type, error: result.error });
       showToast({ type: 'error', message: `Failed to delete ${type}` });
     }
   };

@@ -65,27 +65,31 @@ export function useStorage(): UseStorageReturn {
     };
   }, [fetchData]);
 
-  const deleteRecord = useCallback(
-    async (type: 'contacts' | 'opportunities' | 'activities', id: string): Promise<DeleteResult> => {
-      return new Promise<DeleteResult>((resolve) => {
-        chrome.runtime.sendMessage({ action: 'DELETE_RECORD', data: { type, id } }, (response) => {
+  // Delete failures go back to the caller, which reports them in a toast.
+  // They stay out of `error`, which drives the banner for load failures and would otherwise never clear.
+  const sendDelete = useCallback(
+    (message: object, fallbackError: string): Promise<DeleteResult> =>
+      new Promise<DeleteResult>((resolve) => {
+        chrome.runtime.sendMessage(message, (response) => {
           if (chrome.runtime.lastError) {
-            setError(chrome.runtime.lastError.message || 'Unknown error');
-            resolve({ success: false, error: chrome.runtime.lastError.message });
+            resolve({ success: false, error: chrome.runtime.lastError.message || fallbackError });
             return;
           }
           if (response?.success) {
-            fetchData(); // Refresh data
+            fetchData();
             resolve({ success: true });
           } else {
-            const errorMsg = response?.error || 'Failed to delete record';
-            setError(errorMsg);
-            resolve({ success: false, error: errorMsg });
+            resolve({ success: false, error: response?.error || fallbackError });
           }
         });
-      });
-    },
+      }),
     [fetchData],
+  );
+
+  const deleteRecord = useCallback(
+    (type: 'contacts' | 'opportunities' | 'activities', id: string) =>
+      sendDelete({ action: 'DELETE_RECORD', data: { type, id } }, 'Failed to delete record'),
+    [sendDelete],
   );
 
   // Optimistic delete: immediately removes item from UI state and returns a rollback function
@@ -114,26 +118,9 @@ export function useStorage(): UseStorageReturn {
   );
 
   const deleteAllRecords = useCallback(
-    async (type: 'contacts' | 'opportunities' | 'activities'): Promise<DeleteResult> => {
-      return new Promise<DeleteResult>((resolve) => {
-        chrome.runtime.sendMessage({ action: 'DELETE_ALL_RECORDS', data: { type } }, (response) => {
-          if (chrome.runtime.lastError) {
-            setError(chrome.runtime.lastError.message || 'Unknown error');
-            resolve({ success: false, error: chrome.runtime.lastError.message });
-            return;
-          }
-          if (response?.success) {
-            fetchData(); // Refresh data
-            resolve({ success: true });
-          } else {
-            const errorMsg = response?.error || 'Failed to delete all records';
-            setError(errorMsg);
-            resolve({ success: false, error: errorMsg });
-          }
-        });
-      });
-    },
-    [fetchData],
+    (type: 'contacts' | 'opportunities' | 'activities') =>
+      sendDelete({ action: 'DELETE_ALL_RECORDS', data: { type } }, 'Failed to delete all records'),
+    [sendDelete],
   );
 
   return { data, loading, error, deleteRecord, optimisticDelete, deleteAllRecords, refetch: fetchData };

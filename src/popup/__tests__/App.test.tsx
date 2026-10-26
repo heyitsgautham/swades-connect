@@ -78,6 +78,23 @@ describe('App', () => {
 
     expect(await screen.findByText('Failed to delete. Restored item.')).toBeTruthy();
     expect(rowNames()).toEqual(['Alex Example', 'Bea Sample', 'Cal Demo']);
+    // The toast reports the failure; the page-level storage error banner stays for load failures.
+    expect(screen.queryByText('Delete failed')).toBeNull();
+  });
+
+  it('reports a failed Delete All in a toast without a lasting error banner', async () => {
+    const user = userEvent.setup();
+    installPopupBackend({ contacts }, (message) =>
+      message.action === 'DELETE_ALL_RECORDS' ? { success: false, error: 'Storage is full' } : undefined,
+    );
+    renderPopup();
+    await screen.findByText('3 results');
+
+    await user.click(screen.getByRole('button', { name: /Delete All/ }));
+
+    expect(await screen.findByText('Failed to delete contacts')).toBeTruthy();
+    expect(screen.queryByText('Storage is full')).toBeNull();
+    expect(rowNames()).toHaveLength(3);
   });
 
   it('deletes every contact after the user confirms Delete All', async () => {
