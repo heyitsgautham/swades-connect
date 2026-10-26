@@ -22,12 +22,12 @@ let statusText: HTMLElement | null = null;
 let hideTimeout: number | null = null;
 
 /**
- * Ensures a host element exists for the Shadow DOM.
- * Prevents duplicate mounts by checking for existing host.
+ * Creates the fixed host element for the Shadow DOM.
+ * A host left by an earlier copy of the content script is removed first: its shadow root is closed,
+ * so it cannot be reused, and attaching a second root to it would throw.
  */
-function ensureHost(): HTMLElement {
-  const existing = document.getElementById(INDICATOR_ID);
-  if (existing) return existing;
+function createHost(): HTMLElement {
+  document.getElementById(INDICATOR_ID)?.remove();
 
   const host = document.createElement('div');
   host.id = INDICATOR_ID;
@@ -103,20 +103,13 @@ function createStyles(): HTMLStyleElement {
 /**
  * Mounts the indicator into the page using Shadow DOM.
  * Safe to call multiple times - will not create duplicates.
+ * The page's #swades-shadow-indicator.shadowRoot is null, because the root is closed.
  */
 export function mountIndicator(): void {
-  // Prevent duplicate mounts
+  // Prevent duplicate mounts from this copy of the script
   if (shadowRoot) return;
 
-  shadowHost = ensureHost();
-
-  // Check if shadow root already exists (from previous mount)
-  if (shadowHost.shadowRoot) {
-    // Host exists but we lost our reference - clean up and remount
-    shadowHost.remove();
-    shadowHost = ensureHost();
-  }
-
+  shadowHost = createHost();
   shadowRoot = shadowHost.attachShadow({ mode: 'closed' });
 
   const wrapper = document.createElement('div');
