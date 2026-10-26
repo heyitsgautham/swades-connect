@@ -9,7 +9,7 @@
 
   // Idempotency check - don't install twice
   if (window.__odoo_rpc_interceptor_installed) {
-    console.log('[Odoo RPC Interceptor] Already installed, skipping...');
+    console.debug('[Odoo RPC Interceptor] Already installed, skipping...');
     return;
   }
   window.__odoo_rpc_interceptor_installed = true;
@@ -35,7 +35,7 @@
   // call_button is used for action_done and some unlink operations on activities
   var RPC_ENDPOINT_PATTERN = /\/web\/dataset\/call_(?:kw|button)\/([^/]+)\/([^/?]+)/;
 
-  console.log('[Odoo RPC Interceptor] Installing interceptors...');
+  console.debug('[Odoo RPC Interceptor] Installing interceptors...');
 
   /**
    * Parse the RPC endpoint URL to extract model and method
@@ -76,7 +76,7 @@
       },
     };
 
-    console.log('[Odoo RPC Interceptor] Emitting signal:', signal.payload.model, signal.payload.method);
+    console.debug('[Odoo RPC Interceptor] Emitting signal:', signal.payload.model, signal.payload.method);
     window.postMessage(signal, '*');
   }
 
@@ -142,7 +142,7 @@
     return originalFetch.apply(this, args);
   };
 
-  console.log('[Odoo RPC Interceptor] Fetch interceptor installed');
+  console.debug('[Odoo RPC Interceptor] Fetch interceptor installed');
 
   // ========================================================================
   // XMLHttpRequest Interceptor
@@ -205,6 +205,6 @@
     return originalXHRSend.apply(this, arguments);
   };
 
-  console.log('[Odoo RPC Interceptor] XHR interceptor installed');
-  console.log('[Odoo RPC Interceptor] Ready! Monitoring models:', RELEVANT_MODELS.join(', '));
+  console.debug('[Odoo RPC Interceptor] XHR interceptor installed');
+  console.debug('[Odoo RPC Interceptor] Ready! Monitoring models:', RELEVANT_MODELS.join(', '));
 })();

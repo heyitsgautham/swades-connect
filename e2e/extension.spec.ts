@@ -64,6 +64,22 @@ test.describe('extraction from the saved Odoo pages', () => {
   }
 });
 
+test.describe('Odoo page console', () => {
+  test('stays quiet at the default levels while the RPC interceptor installs and runs', async ({ extension, odoo }) => {
+    const page = await extension.context.newPage();
+    const lines: string[] = [];
+    page.on('console', (message) => {
+      if (message.text().includes('[Odoo RPC Interceptor]')) lines.push(`${message.type()}: ${message.text()}`);
+    });
+
+    await page.goto(`${odoo.origin}/leads/leads-list.html`);
+    await expect.poll(() => lines.length).toBeGreaterThan(0);
+
+    // Chrome hides debug ("Verbose") messages by default; anything louder lands in the user's Odoo console.
+    expect(lines.filter((line) => !line.startsWith('debug:'))).toEqual([]);
+  });
+});
+
 test.describe('popup', () => {
   test('lists what was extracted and deletes a contact', async ({ extension, odoo }) => {
     const odooPage = await extension.context.newPage();
