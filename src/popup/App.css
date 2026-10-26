@@ -16,33 +16,36 @@
   }
 }
 
-/* Focus styles */
-input:focus,
-select:focus {
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 2px rgba(151, 49, 49, 0.1);
-}
+/* In the base layer, like index.css, so utility classes on an element win over these. */
+@layer base {
+  /* Focus styles */
+  input:focus,
+  select:focus {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 2px rgba(151, 49, 49, 0.1);
+  }
 
-/* Button hover effects */
-button:hover:not(:disabled) {
-  opacity: 0.9;
-}
+  /* Button hover effects */
+  button:hover:not(:disabled) {
+    opacity: 0.9;
+  }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
 
-::-webkit-scrollbar-track {
-  background: var(--color-accent);
-}
+  ::-webkit-scrollbar-track {
+    background: var(--color-accent);
+  }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 0;
-}
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 0;
+  }
 
-/* Table row hover */
-table tbody tr:hover {
-  background: var(--color-accent) !important;
+  /* Table row hover */
+  table tbody tr:hover {
+    background: var(--color-accent) !important;
+  }
 }

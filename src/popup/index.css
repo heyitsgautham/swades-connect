@@ -1,27 +1,33 @@
 /* Google Fonts - Inter for body, Oswald for headings */
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap');
 
-/* Tailwind CSS */
+/* Tailwind CSS, compiled by @tailwindcss/vite. Components style themselves with utility classes. */
 @import 'tailwindcss';
 
-/* Design System - CSS Custom Properties */
-:root {
-  /* Color Palette */
+/*
+ * Design tokens. @theme turns each one into utilities (bg-primary, text-muted, border-border,
+ * font-heading) and still defines the CSS variable, so var(--color-primary) keeps working.
+ * `static` emits every token even when no utility uses it, because some styles read the variables directly.
+ */
+@theme static {
   --color-primary: #973131;
+  --color-primary-dark: #7a2828;
   --color-accent: #fff4db;
   --color-background: #ffffff;
   --color-text: #1d1d28;
-  --color-text-secondary: #6b7280;
+  --color-muted: #6b7280;
+  --color-text-secondary: var(--color-muted);
   --color-border: #e5e7eb;
   --color-success: #16a34a;
   --color-error: #dc2626;
 
-  /* Typography - Based on colour-palette.md */
   --font-heading: 'Oswald', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
-  /* Font Sizes (scaled for popup) */
+/* Popup font scale. Kept outside @theme so it does not replace Tailwind's text-xs and friends. */
+:root {
   --text-xs: 11px;
   --text-sm: 12px;
   --text-base: 14px;
@@ -31,39 +37,40 @@
   --text-3xl: 28px;
 }
 
-/* Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Base styles sit in the base layer so utility classes override them. */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-body {
-  font-family: var(--font-primary);
-  font-size: var(--text-base);
-  line-height: 1.5;
-  color: var(--color-text);
-  background-color: var(--color-background);
-  width: 500px;
-  min-height: 400px;
-  max-height: 600px;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  body {
+    font-family: var(--font-primary);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    color: var(--color-text);
+    background-color: var(--color-background);
+    width: 500px;
+    min-height: 400px;
+    max-height: 600px;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-#root {
-  width: 100%;
-  height: 100%;
-}
+  #root {
+    width: 100%;
+    height: 100%;
+  }
 
-/* Heading styles */
-h1,
-h2,
-h3,
-.heading {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  h1,
+  h2,
+  h3,
+  .heading {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
 }
