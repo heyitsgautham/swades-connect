@@ -15,6 +15,8 @@ import './App.css';
 
 type TabType = 'contacts' | 'opportunities' | 'activities';
 
+const bannerClassName = 'mx-4 my-2 flex items-center gap-2 border-l-4 px-4 py-3 text-[12px] font-medium';
+
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('contacts');
   const [showSettings, setShowSettings] = useState(false);
@@ -85,90 +87,27 @@ function App() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          width: '500px',
-          height: '400px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '16px',
-          background: 'var(--color-background)',
-        }}
-      >
-        <div
-          style={{
-            width: '32px',
-            height: '32px',
-            border: '4px solid var(--color-border)',
-            borderTopColor: 'var(--color-primary)',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-          }}
-        />
-        <p style={{ color: 'var(--color-text-secondary)' }}>Loading data...</p>
+      <div className="flex h-[400px] w-[500px] flex-col items-center justify-center gap-4 bg-background">
+        <div className="size-8 animate-spin rounded-full border-4 border-border border-t-primary" />
+        <p className="text-muted">Loading data...</p>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        width: '500px',
-        minHeight: '400px',
-        maxHeight: '600px',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--color-background)',
-        overflow: 'hidden',
-      }}
-    >
+    <div className="flex max-h-[600px] min-h-[400px] w-[500px] flex-col overflow-hidden bg-background">
       {/* Header */}
-      <header
-        style={{
-          background: 'var(--color-primary)',
-          color: 'white',
-          padding: '16px',
-          borderBottom: '2px solid #7a2828',
-          position: 'relative',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <h1
-            style={{
-              fontSize: 'var(--text-3xl)',
-              fontWeight: 400,
-              marginBottom: '4px',
-              fontFamily: 'var(--font-heading)',
-              letterSpacing: '1px',
-              textTransform: 'uppercase',
-            }}
-          >
+      <header className="relative border-b-2 border-primary-dark bg-primary p-4 text-white">
+        <div className="text-center">
+          <h1 className="mb-1 font-heading text-(length:--text-3xl) font-normal tracking-[1px] uppercase">
             Swades Connect
           </h1>
-          <p style={{ fontSize: 'var(--text-sm)', opacity: 0.9, fontFamily: 'var(--font-body)' }}>Odoo CRM Extractor</p>
+          <p className="font-body text-(length:--text-sm) opacity-90">Odoo CRM Extractor</p>
         </div>
 
-        {/* Settings Button */}
         <button
           onClick={() => setShowSettings(true)}
-          style={{
-            position: 'absolute',
-            top: '16px',
-            right: '16px',
-            background: 'none',
-            border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            padding: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            opacity: 0.8,
-            transition: 'opacity 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+          className="absolute top-4 right-4 flex cursor-pointer items-center p-1 text-white opacity-80 [transition:opacity_0.2s] hover:opacity-100"
           title="Settings"
         >
           <SettingsIcon size={20} />
@@ -176,58 +115,22 @@ function App() {
       </header>
 
       {/* Status Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 16px',
-          background: 'var(--color-accent)',
-          borderBottom: '1px solid var(--color-border)',
-          gap: '12px',
-        }}
-      >
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-accent px-4 py-3">
         <SyncStatus lastSync={data?.lastSync} />
         <ExtractButton isLoading={isExtracting} onClick={handleExtract} />
       </div>
 
       {/* Status Messages */}
       {(storageError || extractionError) && (
-        <div
-          style={{
-            padding: '12px 16px',
-            margin: '8px 16px',
-            background: '#fee2e2',
-            color: '#991b1b',
-            borderLeft: '4px solid #dc2626',
-            fontSize: '12px',
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <AlertCircle size={16} style={{ flexShrink: 0 }} />
+        <div className={`${bannerClassName} border-[#dc2626] bg-[#fee2e2] text-[#991b1b]`}>
+          <AlertCircle size={16} className="shrink-0" />
           <span>{storageError || extractionError}</span>
         </div>
       )}
 
       {success && (
-        <div
-          style={{
-            padding: '12px 16px',
-            margin: '8px 16px',
-            background: '#dcfce7',
-            color: '#166534',
-            borderLeft: '4px solid #16a34a',
-            fontSize: '12px',
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <CheckCircle size={16} style={{ flexShrink: 0 }} />
+        <div className={`${bannerClassName} border-[#16a34a] bg-[#dcfce7] text-[#166534]`}>
+          <CheckCircle size={16} className="shrink-0" />
           <span>Extracted {recordsExtracted} records</span>
         </div>
       )}
@@ -236,13 +139,7 @@ function App() {
       <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Tab Content */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '12px 16px',
-        }}
-      >
+      <div className="flex-1 overflow-y-auto px-4 py-3">
         {activeTab === 'contacts' && (
           <ContactsTab
             contacts={data?.contacts || []}
