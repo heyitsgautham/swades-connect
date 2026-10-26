@@ -6,176 +6,66 @@ interface SettingsProps {
   onClose: () => void;
 }
 
+const badgeClassName = 'rounded px-1.5 py-0.5 text-[10px]';
+
 function Settings({ onClose }: SettingsProps) {
   const [rpcSync, toggleRpcSync] = useSyncPreference('rpcSync');
   const [autoExtract, toggleAutoExtract] = useSyncPreference('autoExtract');
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          background: 'var(--color-background)',
-          borderRadius: '8px',
-          padding: '24px',
-          width: '400px',
-          maxWidth: '90%',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '20px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <SettingsIcon size={20} style={{ color: 'var(--color-primary)' }} />
-            <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Settings</h2>
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(0,0,0,0.5)]">
+      <div className="w-[400px] max-w-[90%] rounded-lg bg-background p-6 shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <SettingsIcon size={20} className="text-primary" />
+            <h2 className="text-[18px] font-semibold">Settings</h2>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              color: 'var(--color-text-secondary)',
-            }}
-          >
+          <button onClick={onClose} className="flex cursor-pointer items-center p-1 text-muted">
             <X size={20} />
           </button>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-          }}
-        >
-          {/* Sync Methods Section */}
+        <div className="flex flex-col gap-5">
           <div>
-            <h3
-              style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'var(--color-text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '12px',
-              }}
-            >
-              Sync Methods
-            </h3>
+            <h3 className="mb-3 text-[13px] font-semibold tracking-[0.5px] text-muted uppercase">Sync Methods</h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="flex flex-col gap-3">
               <SyncToggle
                 icon={Zap}
-                iconColor="var(--color-primary)"
+                iconClassName="text-primary"
                 label="Real-time Sync"
-                badge={
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      color: 'white',
-                      background: 'var(--color-primary)',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                    }}
-                  >
-                    RECOMMENDED
-                  </span>
-                }
+                badge={<span className={`${badgeClassName} bg-primary font-semibold text-white`}>RECOMMENDED</span>}
                 description="Intercepts Odoo's RPC calls for efficient, accurate data sync. Uses minimal resources and captures all data changes automatically."
                 enabled={rpcSync}
                 onToggle={toggleRpcSync}
-                onColor="var(--color-primary)"
-                tint={{ background: 'rgba(99, 102, 241, 0.08)', border: 'rgba(99, 102, 241, 0.2)' }}
+                onClassName="bg-primary"
+                tintClassName="border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.08)]"
               />
               <SyncToggle
                 icon={Eye}
-                iconColor="#22c55e"
+                iconClassName="text-[#22c55e]"
                 label="Auto-Extract"
-                badge={
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 500,
-                      color: 'var(--color-text-secondary)',
-                      background: 'var(--color-border)',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                    }}
-                  >
-                    FALLBACK
-                  </span>
-                }
+                badge={<span className={`${badgeClassName} bg-border font-medium text-muted`}>FALLBACK</span>}
                 description="Monitors DOM changes and extracts visible data. Use as backup when RPC sync isn't available."
                 enabled={autoExtract}
                 onToggle={toggleAutoExtract}
-                onColor="#22c55e"
-                tint={{ background: 'rgba(34, 197, 94, 0.08)', border: 'rgba(34, 197, 94, 0.2)' }}
+                onClassName="bg-[#22c55e]"
+                tintClassName="border-[rgba(34,197,94,0.2)] bg-[rgba(34,197,94,0.08)]"
               />
             </div>
           </div>
 
-          {/* Status Messages */}
           {rpcSync && (
-            <div
-              style={{
-                padding: '12px',
-                background: 'rgba(99, 102, 241, 0.1)',
-                borderLeft: '3px solid var(--color-primary)',
-                borderRadius: '4px',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--color-primary)',
-                  margin: 0,
-                  fontWeight: 500,
-                }}
-              >
+            <div className="rounded border-l-[3px] border-primary bg-[rgba(99,102,241,0.1)] p-3">
+              <p className="text-[12px] font-medium text-primary">
                 ⚡ Real-time Sync is ON — Data syncs automatically via RPC interception
               </p>
             </div>
           )}
 
           {autoExtract && !rpcSync && (
-            <div
-              style={{
-                padding: '12px',
-                background: '#dcfce7',
-                borderLeft: '3px solid #16a34a',
-                borderRadius: '4px',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: '#166534',
-                  margin: 0,
-                }}
-              >
+            <div className="rounded border-l-[3px] border-[#16a34a] bg-[#dcfce7] p-3">
+              <p className="text-[12px] text-[#166534]">
                 ✓ Auto-extract is ON. The extension badge will show "ON" when active.
               </p>
             </div>
