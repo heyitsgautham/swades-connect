@@ -15,10 +15,10 @@ export default defineConfig({
       exclude: ['src/**/__tests__/**', 'src/test/**', 'src/popup/main.tsx', 'src/**/*.d.ts'],
       // CI fails below these. Raise them as coverage grows; never lower them to pass.
       thresholds: {
-        statements: 80,
-        branches: 75,
-        functions: 85,
-        lines: 80,
+        statements: 85,
+        branches: 80,
+        functions: 88,
+        lines: 85,
       },
     },
   },

@@ -110,7 +110,7 @@ The unit tests never read the saved pages under `odoo-html/`; only the end-to-en
 Popup specs render the real components with React Testing Library and drive them with `user-event`, the way a user clicks and types.
 
 Coverage covers every file under `src/`, the React popup included, except tests, test helpers and `src/popup/main.tsx`.
-CI fails if it drops below 80% of statements and lines, 85% of functions or 75% of branches.
+CI fails if it drops below 85% of statements and lines, 88% of functions or 80% of branches.
 
 ### End-to-end tests
 
