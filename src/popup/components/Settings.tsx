@@ -1,44 +1,14 @@
-import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, X, Zap, Eye } from 'lucide-react';
-import { notifyActiveTab } from '../activeTab';
+import { useSyncPreference } from '../hooks/useSyncPreference';
+import SyncToggle from './SyncToggle';
 
 interface SettingsProps {
   onClose: () => void;
 }
 
 function Settings({ onClose }: SettingsProps) {
-  const [autoExtract, setAutoExtract] = useState(false);
-  const [rpcSync, setRpcSync] = useState(false);
-
-  useEffect(() => {
-    // Load preferences from storage
-    chrome.storage.local.get(['auto_extract_enabled', 'rpc_sync_enabled'], (result) => {
-      setAutoExtract(!!result.auto_extract_enabled);
-      setRpcSync(!!result.rpc_sync_enabled);
-    });
-  }, []);
-
-  const handleAutoExtractToggle = async () => {
-    const newValue = !autoExtract;
-    setAutoExtract(newValue);
-
-    // Save to storage
-    await chrome.storage.local.set({ auto_extract_enabled: newValue });
-
-    // Tell an open Odoo tab now; any other tab picks the preference up on its next load.
-    await notifyActiveTab({ action: 'TOGGLE_AUTO_EXTRACT', enabled: newValue });
-  };
-
-  const handleRpcSyncToggle = async () => {
-    const newValue = !rpcSync;
-    setRpcSync(newValue);
-
-    // Save to storage
-    await chrome.storage.local.set({ rpc_sync_enabled: newValue });
-
-    // Tell an open Odoo tab now; any other tab picks the preference up on its next load.
-    await notifyActiveTab({ action: 'TOGGLE_RPC_SYNC', enabled: newValue });
-  };
+  const [rpcSync, toggleRpcSync] = useSyncPreference('rpcSync');
+  const [autoExtract, toggleAutoExtract] = useSyncPreference('autoExtract');
 
   return (
     <div
@@ -115,32 +85,12 @@ function Settings({ onClose }: SettingsProps) {
               Sync Methods
             </h3>
 
-            {/* Real-time Sync Toggle (RPC-based) */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                gap: '12px',
-                padding: '12px',
-                background: rpcSync ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                borderRadius: '8px',
-                border: rpcSync ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent',
-                marginBottom: '12px',
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <Zap size={14} style={{ color: 'var(--color-primary)' }} />
-                  <label
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: 'var(--color-text)',
-                    }}
-                  >
-                    Real-time Sync
-                  </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <SyncToggle
+                icon={Zap}
+                iconColor="var(--color-primary)"
+                label="Real-time Sync"
+                badge={
                   <span
                     style={{
                       fontSize: '10px',
@@ -153,74 +103,18 @@ function Settings({ onClose }: SettingsProps) {
                   >
                     RECOMMENDED
                   </span>
-                </div>
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--color-text-secondary)',
-                    margin: 0,
-                    lineHeight: '1.4',
-                  }}
-                >
-                  Intercepts Odoo's RPC calls for efficient, accurate data sync. Uses minimal resources and captures all
-                  data changes automatically.
-                </p>
-              </div>
-
-              <button
-                onClick={handleRpcSyncToggle}
-                style={{
-                  position: 'relative',
-                  width: '48px',
-                  height: '24px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                  backgroundColor: rpcSync ? 'var(--color-primary)' : '#d1d5db',
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '2px',
-                    left: rpcSync ? '26px' : '2px',
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    backgroundColor: 'white',
-                    transition: 'left 0.2s',
-                  }}
-                />
-              </button>
-            </div>
-
-            {/* Auto-Extract Toggle (DOM-based) */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                gap: '12px',
-                padding: '12px',
-                background: autoExtract ? 'rgba(34, 197, 94, 0.08)' : 'transparent',
-                borderRadius: '8px',
-                border: autoExtract ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid transparent',
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <Eye size={14} style={{ color: '#22c55e' }} />
-                  <label
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: 'var(--color-text)',
-                    }}
-                  >
-                    Auto-Extract
-                  </label>
+                }
+                description="Intercepts Odoo's RPC calls for efficient, accurate data sync. Uses minimal resources and captures all data changes automatically."
+                enabled={rpcSync}
+                onToggle={toggleRpcSync}
+                onColor="var(--color-primary)"
+                tint={{ background: 'rgba(99, 102, 241, 0.08)', border: 'rgba(99, 102, 241, 0.2)' }}
+              />
+              <SyncToggle
+                icon={Eye}
+                iconColor="#22c55e"
+                label="Auto-Extract"
+                badge={
                   <span
                     style={{
                       fontSize: '10px',
@@ -233,46 +127,13 @@ function Settings({ onClose }: SettingsProps) {
                   >
                     FALLBACK
                   </span>
-                </div>
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--color-text-secondary)',
-                    margin: 0,
-                    lineHeight: '1.4',
-                  }}
-                >
-                  Monitors DOM changes and extracts visible data. Use as backup when RPC sync isn't available.
-                </p>
-              </div>
-
-              <button
-                onClick={handleAutoExtractToggle}
-                style={{
-                  position: 'relative',
-                  width: '48px',
-                  height: '24px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                  backgroundColor: autoExtract ? '#22c55e' : '#d1d5db',
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '2px',
-                    left: autoExtract ? '26px' : '2px',
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    backgroundColor: 'white',
-                    transition: 'left 0.2s',
-                  }}
-                />
-              </button>
+                }
+                description="Monitors DOM changes and extracts visible data. Use as backup when RPC sync isn't available."
+                enabled={autoExtract}
+                onToggle={toggleAutoExtract}
+                onColor="#22c55e"
+                tint={{ background: 'rgba(34, 197, 94, 0.08)', border: 'rgba(34, 197, 94, 0.2)' }}
+              />
             </div>
           </div>
 
