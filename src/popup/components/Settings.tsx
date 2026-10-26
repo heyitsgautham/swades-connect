@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, X, Zap, Eye } from 'lucide-react';
+import { notifyActiveTab } from '../activeTab';
 
 interface SettingsProps {
   onClose: () => void;
@@ -24,14 +25,8 @@ function Settings({ onClose }: SettingsProps) {
     // Save to storage
     await chrome.storage.local.set({ auto_extract_enabled: newValue });
 
-    // Send message to active tab to toggle DOM watcher
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, {
-        action: 'TOGGLE_AUTO_EXTRACT',
-        enabled: newValue,
-      });
-    }
+    // Tell an open Odoo tab now; any other tab picks the preference up on its next load.
+    await notifyActiveTab({ action: 'TOGGLE_AUTO_EXTRACT', enabled: newValue });
   };
 
   const handleRpcSyncToggle = async () => {
@@ -41,14 +36,8 @@ function Settings({ onClose }: SettingsProps) {
     // Save to storage
     await chrome.storage.local.set({ rpc_sync_enabled: newValue });
 
-    // Send message to active tab to toggle RPC sync
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, {
-        action: 'TOGGLE_RPC_SYNC',
-        enabled: newValue,
-      });
-    }
+    // Tell an open Odoo tab now; any other tab picks the preference up on its next load.
+    await notifyActiveTab({ action: 'TOGGLE_RPC_SYNC', enabled: newValue });
   };
 
   return (
