@@ -17,6 +17,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "check": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test:coverage && pnpm run build",
+    "fresh-check": "rm -rf node_modules dist coverage && pnpm install --frozen-lockfile && pnpm run check",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
