@@ -1,6 +1,8 @@
 import type { StorageSchema, Contact, Opportunity, Activity } from './types';
 import { waitForLock, releaseLock } from './lock';
 import { StorageError } from './errors';
+import { createLogger } from './logger';
+import { activitySchema, contactSchema, opportunitySchema } from './schemas';
 
 const STORAGE_KEY = 'odoo_data';
 
@@ -25,10 +27,46 @@ export async function initializeStorage(): Promise<void> {
   }
 }
 
-// Get all stored data
+const log = createLogger('storage');
+
+const RECORD_SCHEMAS = {
+  contacts: contactSchema,
+  opportunities: opportunitySchema,
+  activities: activitySchema,
+} as const;
+
+/**
+ * Keep the stored records of one type that match its schema.
+ * A missing or non-array value reads as no records, so one bad entry never breaks a read.
+ */
+function readRecords<T extends RecordType>(type: T, value: unknown): StorageSchema['odoo_data'][T] {
+  if (!Array.isArray(value)) return [];
+  const schema = RECORD_SCHEMAS[type];
+  const valid = value.flatMap((item) => {
+    const parsed = schema.safeParse(item);
+    return parsed.success ? [parsed.data] : [];
+  });
+  if (valid.length < value.length) {
+    log.warn('Dropped stored records that do not match the schema', { type, dropped: value.length - valid.length });
+  }
+  return valid as StorageSchema['odoo_data'][T];
+}
+
+/**
+ * Read every stored record, validated against the record schemas.
+ * Storage is written by earlier versions too, and can be edited from DevTools, so it is parsed rather than cast.
+ * Always returns a new object, never the shared default.
+ */
 export async function getData(): Promise<StorageSchema['odoo_data']> {
   const result = await chrome.storage.local.get(STORAGE_KEY);
-  return (result[STORAGE_KEY] as StorageSchema['odoo_data']) || DEFAULT_DATA;
+  const stored = result[STORAGE_KEY];
+  const raw = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<string, unknown>;
+  return {
+    contacts: readRecords('contacts', raw.contacts),
+    opportunities: readRecords('opportunities', raw.opportunities),
+    activities: readRecords('activities', raw.activities),
+    lastSync: typeof raw.lastSync === 'number' ? raw.lastSync : DEFAULT_DATA.lastSync,
+  };
 }
 
 // Save/merge new records with deduplication

@@ -87,6 +87,36 @@ describe('storage against chrome.storage.local', () => {
     expect(await getData()).toEqual({ contacts: [], opportunities: [], activities: [], lastSync: 0 });
   });
 
+  it('getData drops stored records that do not match their schema and fills in missing collections', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const contact = makeContact();
+    await chromeMock().storage.local.set({
+      odoo_data: { contacts: [contact, { id: 5, name: 'no email' }], activities: 'not a list', lastSync: 'yesterday' },
+    });
+
+    expect(await getData()).toEqual({ contacts: [contact], opportunities: [], activities: [], lastSync: 0 });
+    expect(warn).toHaveBeenCalledWith('[Swades Connect:storage] Dropped stored records that do not match the schema', {
+      type: 'contacts',
+      dropped: 1,
+    });
+  });
+
+  it('saveData still works when the stored data is missing a collection', async () => {
+    await chromeMock().storage.local.set({ odoo_data: { contacts: [makeContact({ id: 'old' })], lastSync: 1 } });
+
+    await saveData([], [makeOpportunity()], []);
+
+    expect(stored().contacts.map((c) => c.id)).toEqual(['old']);
+    expect(stored().opportunities).toHaveLength(1);
+    expect(stored().activities).toEqual([]);
+  });
+
+  it('getData hands out a fresh empty object each time', async () => {
+    const first = await getData();
+    first.contacts.push(makeContact());
+    expect((await getData()).contacts).toEqual([]);
+  });
+
   it('initializeStorage writes the default shape once and keeps existing data', async () => {
     await initializeStorage();
     expect(stored().contacts).toEqual([]);
