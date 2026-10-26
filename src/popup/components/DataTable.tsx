@@ -35,28 +35,10 @@ interface DataTableProps {
 
 function DataTable({ columns, data, onDelete, sortKey, sortDirection, onSort }: DataTableProps) {
   return (
-    <div
-      style={{
-        overflow: 'hidden',
-        border: '1px solid var(--color-border)',
-        borderRadius: '0px',
-      }}
-    >
-      <table
-        style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          fontSize: '12px',
-          tableLayout: 'fixed',
-        }}
-      >
+    <div className="overflow-hidden border border-border">
+      <table className="w-full table-fixed border-collapse text-[12px]">
         <thead>
-          <tr
-            style={{
-              background: 'var(--color-accent)',
-              borderBottom: '2px solid var(--color-border)',
-            }}
-          >
+          <tr className="border-b-2 border-border bg-accent">
             {columns.map((col) => {
               const isSortable = col.sortable !== false && onSort;
               const isActive = sortKey === col.key;
@@ -64,69 +46,35 @@ function DataTable({ columns, data, onDelete, sortKey, sortDirection, onSort }: 
                 <th
                   key={col.key}
                   onClick={() => isSortable && onSort(col.key)}
-                  style={{
-                    padding: '8px',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: 'var(--color-text)',
-                    cursor: isSortable ? 'pointer' : 'default',
-                    userSelect: 'none',
-                    transition: 'background 0.15s ease',
-                    width: col.width || 'auto',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isSortable) {
-                      e.currentTarget.style.background = 'rgba(151, 49, 49, 0.08)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                  }}
+                  className={`truncate p-2 text-left font-semibold text-text select-none [transition:background_0.15s_ease] ${
+                    isSortable ? 'cursor-pointer hover:bg-[rgba(151,49,49,0.08)]' : 'cursor-default'
+                  }`}
+                  style={{ width: col.width || 'auto' }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="flex items-center gap-1">
                     {col.label}
                     {isSortable &&
                       isActive &&
                       (sortDirection === 'asc' ? (
-                        <ArrowUp size={12} style={{ color: 'var(--color-primary)' }} />
+                        <ArrowUp size={12} className="text-primary" />
                       ) : (
-                        <ArrowDown size={12} style={{ color: 'var(--color-primary)' }} />
+                        <ArrowDown size={12} className="text-primary" />
                       ))}
                   </span>
                 </th>
               );
             })}
-            <th
-              style={{
-                padding: '8px',
-                textAlign: 'center',
-                fontWeight: 600,
-                color: 'var(--color-text)',
-                width: '40px',
-              }}
-            >
-              Action
-            </th>
+            <th className="w-10 p-2 text-center font-semibold text-text">Action</th>
           </tr>
         </thead>
         <tbody>
+          {/* Row hover comes from the tbody tr:hover rule in App.css. */}
           {data.map((row, index) => (
             <tr
               key={row.id}
-              style={{
-                borderBottom: '1px solid var(--color-border)',
-                background: index % 2 === 1 ? 'rgba(255, 244, 219, 0.3)' : 'transparent',
-                transition: 'background 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(151, 49, 49, 0.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = index % 2 === 1 ? 'rgba(255, 244, 219, 0.3)' : 'transparent';
-              }}
+              className={`border-b border-border [transition:background_0.15s_ease] ${
+                index % 2 === 1 ? 'bg-[rgba(255,244,219,0.3)]' : 'bg-transparent'
+              }`}
             >
               {columns.map((col) => {
                 const cellValue = getRowValue(row, col.key);
@@ -134,19 +82,13 @@ function DataTable({ columns, data, onDelete, sortKey, sortDirection, onSort }: 
                   <td
                     key={`${row.id}-${col.key}`}
                     title={String(cellValue ?? '')}
-                    style={{
-                      padding: '12px 8px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      maxWidth: '120px',
-                    }}
+                    className="max-w-[120px] truncate px-2 py-3"
                   >
                     {col.format ? col.format(cellValue) : (cellValue ?? '')}
                   </td>
                 );
               })}
-              <td style={{ textAlign: 'center', padding: '8px' }}>
+              <td className="p-2 text-center">
                 <button
                   onClick={() => {
                     if (window.confirm(`Delete "${getRowDisplayName(row)}"?`)) {
@@ -154,26 +96,7 @@ function DataTable({ columns, data, onDelete, sortKey, sortDirection, onSort }: 
                     }
                   }}
                   title="Delete this record"
-                  style={{
-                    padding: '6px',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: '9999px',
-                    cursor: 'pointer',
-                    color: '#9ca3af',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#dc2626';
-                    e.currentTarget.style.background = '#fef2f2';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#9ca3af';
-                    e.currentTarget.style.background = 'transparent';
-                  }}
+                  className="flex cursor-pointer items-center justify-center rounded-full bg-transparent p-1.5 text-[#9ca3af] [transition:all_0.2s_ease] hover:bg-[#fef2f2] hover:text-[#dc2626]"
                 >
                   <Trash2 size={16} />
                 </button>
