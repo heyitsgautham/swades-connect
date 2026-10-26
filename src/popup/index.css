@@ -1,8 +1,13 @@
 /* Google Fonts - Inter for body, Oswald for headings */
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap');
 
-/* Tailwind CSS, compiled by @tailwindcss/vite. Components style themselves with utility classes. */
-@import 'tailwindcss';
+/*
+ * Tailwind CSS, compiled by @tailwindcss/vite. Components style themselves with utility classes.
+ * Only the popup is scanned for class names; the content script and the saved Odoo pages
+ * use Odoo's own class names, which would otherwise turn into unused utilities here.
+ */
+@import 'tailwindcss' source(none);
+@source './';
 
 /*
  * Design tokens. @theme turns each one into utilities (bg-primary, text-muted, border-border,
