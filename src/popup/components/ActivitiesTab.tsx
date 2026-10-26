@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useId, useState, useMemo } from 'react';
 import { Phone, Users, Mail, CheckSquare, FileText, Calendar, Trash2 } from 'lucide-react';
 import type { Activity } from '../../shared/types';
 import SearchBox from './SearchBox';
@@ -20,6 +20,7 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'done'>('all');
   const [typeFilter, setTypeFilter] = useState<ActivityType>('all');
   const handleExport = useExport('activities', activities);
+  const sortSelectId = useId();
 
   const filteredActivities = useMemo(() => {
     return activities.filter((activity) => {
@@ -93,8 +94,13 @@ function ActivitiesTab({ activities, onDelete, onDeleteAll }: ActivitiesTabProps
         ]}
       />
 
-      <FilterRow label="Sort by:">
-        <select value={sortKey} onChange={(e) => handleSort(e.target.value)} className={selectClassName}>
+      <FilterRow label="Sort by:" htmlFor={sortSelectId}>
+        <select
+          id={sortSelectId}
+          value={sortKey}
+          onChange={(e) => handleSort(e.target.value)}
+          className={selectClassName}
+        >
           {sortOptions.map((opt) => (
             <option key={opt.key} value={opt.key}>
               {opt.label}

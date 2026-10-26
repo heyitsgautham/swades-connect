@@ -67,4 +67,16 @@ describe('FilterSelect', () => {
     });
     expect(onChange).toHaveBeenCalledWith('Won');
   });
+
+  it('labels its select, so clicking the label focuses it and screen readers name it', () => {
+    act(() =>
+      root.render(<FilterSelect label="Stage:" value="" onChange={vi.fn()} options={[{ value: '', label: 'All' }]} />),
+    );
+
+    const label = container.querySelector('label')!;
+    const select = container.querySelector('select')!;
+    expect(select.id).not.toBe('');
+    expect(label.htmlFor).toBe(select.id);
+    expect(select.labels?.[0]?.textContent).toBe('Stage:');
+  });
 });

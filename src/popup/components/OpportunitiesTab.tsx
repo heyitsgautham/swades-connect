@@ -66,6 +66,7 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
           min="0"
           max="100"
           placeholder="Min %"
+          aria-label="Minimum probability"
           value={probMin}
           onChange={(e) => setProbMin(e.target.value)}
           className={probabilityInputClassName}
@@ -76,6 +77,7 @@ function OpportunitiesTab({ opportunities, onDelete, onDeleteAll }: Opportunitie
           min="0"
           max="100"
           placeholder="Max %"
+          aria-label="Maximum probability"
           value={probMax}
           onChange={(e) => setProbMax(e.target.value)}
           className={probabilityInputClassName}

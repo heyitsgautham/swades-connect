@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Download, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ExportFormat } from '../../shared/export';
@@ -8,11 +8,23 @@ import { primaryButtonClassName, selectClassName } from './controlStyles';
 
 const labelClassName = 'text-[12px] font-semibold text-muted';
 
-/** A label followed by its inputs on one line. */
-export function FilterRow({ label, nowrap, children }: { label: string; nowrap?: boolean; children: ReactNode }) {
+/** A label followed by its inputs on one line. `htmlFor` names the input the label belongs to. */
+export function FilterRow({
+  label,
+  htmlFor,
+  nowrap,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  nowrap?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div className="flex items-center gap-2">
-      <label className={nowrap ? `${labelClassName} whitespace-nowrap` : labelClassName}>{label}</label>
+      <label htmlFor={htmlFor} className={nowrap ? `${labelClassName} whitespace-nowrap` : labelClassName}>
+        {label}
+      </label>
       {children}
     </div>
   );
@@ -35,9 +47,11 @@ export function FilterSelect({
   options: SelectOption[];
   onChange: (value: string) => void;
 }) {
+  const id = useId();
+
   return (
-    <FilterRow label={label}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={selectClassName}>
+    <FilterRow label={label} htmlFor={id}>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={selectClassName}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
