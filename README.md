@@ -164,7 +164,11 @@ src/
 │   ├── viewDetector.ts       list, kanban or form; which model
 │   └── domWatcher.ts         MutationObserver behind auto-extract
 ├── injected/                 rpcInterceptor.ts helpers and the Shadow DOM indicator
-├── popup/                    React dashboard
+├── popup/                    React dashboard, styled with Tailwind utility classes
+│   ├── App.tsx               header, status bar, tabs and the Settings modal
+│   ├── activeTab.ts          sends a message to the active tab without throwing on non-Odoo pages
+│   ├── components/           tabs, DataTable, TabControls, Settings, SyncToggle, Toast
+│   └── hooks/                useStorage, useExtraction, useSyncPreference, useSort, useExport, useToast
 ├── shared/                   types, zod schemas, storage, lock, logger, errors, export
 └── test/                     chrome mock, fixtures and Odoo markup builders
 public/

@@ -24,6 +24,7 @@ To see debug logs, run `chrome.storage.local.set({ log_level: 'debug' })` in the
 - Put specs in a `__tests__/` folder next to the module, named `<module>.test.ts`.
 - Use the chrome mock from `src/test/chromeMock.ts`; `src/test/setup.ts` gives every test an empty one.
 - Build Odoo markup with `src/test/odooDom.ts` and records with `src/test/fixtures.ts`.
+- Test popup components with React Testing Library and `user-event`, and answer their messages with `installPopupBackend` from `src/test/popupBackend.ts`.
 - Test data must be invented. Never paste a real Odoo page or a real person's contact details into a fixture.
 - A bug fix lands with a test that fails without the fix.
 - Coverage thresholds live in `vitest.config.ts`. Raise them when coverage grows; never lower them to make CI pass.
@@ -33,6 +34,7 @@ To see debug logs, run `chrome.storage.local.set({ log_level: 'debug' })` in the
 - TypeScript is strict. Avoid `any` and `as unknown as` casts; parse untrusted data with the zod schemas in `src/shared/schemas.ts`.
 - Any new runtime message action needs a schema in `schemas.ts`, a handler, and a router test.
 - Log through `createLogger(scope)` from `src/shared/logger.ts`, not `console`.
+- Style popup components with Tailwind utility classes and the tokens in `src/popup/index.css`, such as `bg-primary`, `text-muted` and `border-border`. Use `hover:` and `active:` classes instead of mouse handlers, and keep inline `style` for values that come from data, such as a column width.
 - Keep files under 500 lines. Split by responsibility when one grows past that.
 - ESLint enforces the rules and Prettier the formatting. Run `pnpm run lint` and `pnpm run format`.
 
