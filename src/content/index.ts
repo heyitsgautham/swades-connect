@@ -8,7 +8,7 @@
 
 import { mountIndicator } from '../injected/indicator';
 import { injectRpcInterceptor } from '../injected/rpcInterceptor';
-import { createLogger, describeError, initLogLevelFromStorage } from '../shared/logger';
+import { createLogger, describeError, initLoggingFromStorage } from '../shared/logger';
 import type { MessageResponse } from '../shared/messages';
 import { parseContentMessage } from '../shared/schemas';
 import { handleExtraction, startAutoExtract, stopAutoExtract } from './extraction';
@@ -16,7 +16,7 @@ import { startRpcSync, stopRpcSync } from './rpcSync';
 
 const log = createLogger('content');
 
-void initLogLevelFromStorage();
+void initLoggingFromStorage();
 log.debug('Content script loaded', { url: window.location.href });
 
 // Inject the RPC interceptor immediately, before Odoo issues its first

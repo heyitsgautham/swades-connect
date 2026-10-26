@@ -126,11 +126,19 @@ The extension keeps its settings in `chrome.storage.local`.
 | `auto_extract_enabled` | Popup settings | Re-extracts when data rows change on the page |
 | `rpc_sync_enabled` | Popup settings | Applies Odoo RPC creates, edits and deletes as they happen |
 | `log_level` | You, from the service worker console | `debug`, `info` (default), `warn` or `error` |
+| `log_format` | You, from any extension console | `text` (default) prints `[Swades Connect:<scope>] message` with the context as a second argument; `json` prints one `{ ts, level, scope, message, context }` object per line |
 
 To see the per-message traces, run this in the service worker console.
 
 ```js
 chrome.storage.local.set({ log_level: 'debug' })
+```
+
+For logs you can filter or attach to a bug report, switch to JSON lines.
+The service worker, the content script and the popup all follow the change without a reload.
+
+```js
+chrome.storage.local.set({ log_format: 'json' })
 ```
 
 ## Usage

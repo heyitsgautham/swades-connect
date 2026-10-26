@@ -6,7 +6,7 @@
  * handler runs. Every change to stored data is broadcast to open popups.
  */
 
-import { createLogger, describeError, initLogLevelFromStorage } from '../shared/logger';
+import { createLogger, describeError, initLoggingFromStorage } from '../shared/logger';
 import type { MessageResponse } from '../shared/messages';
 import { initializeStorage } from '../shared/storage';
 import { broadcastStorageUpdate } from './broadcast';
@@ -14,7 +14,7 @@ import { routeMessage } from './router';
 
 const log = createLogger('background');
 
-void initLogLevelFromStorage();
+void initLoggingFromStorage();
 
 initializeStorage()
   .then(() => log.debug('Storage initialized'))
