@@ -8,7 +8,6 @@
 
 import { createLogger, describeError, initLoggingFromStorage } from '../shared/logger';
 import type { MessageResponse } from '../shared/messages';
-import { initializeStorage } from '../shared/storage';
 import { broadcastStorageUpdate } from './broadcast';
 import { routeMessage } from './router';
 
@@ -16,9 +15,8 @@ const log = createLogger('background');
 
 void initLoggingFromStorage();
 
-initializeStorage()
-  .then(() => log.debug('Storage initialized'))
-  .catch((error) => log.error('Storage initialization failed', { error: describeError(error) }));
+// No startup write to storage: getData reads a missing odoo_data as empty, and a startup write
+// that raced the first save used to overwrite it with the empty default.
 
 /**
  * Uses the sendResponse callback and returns true to keep the channel open,

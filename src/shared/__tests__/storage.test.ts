@@ -6,7 +6,6 @@ import {
   deleteRecord,
   deleteRecordsById,
   getData,
-  initializeStorage,
   mergeNonEmpty,
   saveData,
   upsertRecords,
@@ -115,15 +114,6 @@ describe('storage against chrome.storage.local', () => {
     const first = await getData();
     first.contacts.push(makeContact());
     expect((await getData()).contacts).toEqual([]);
-  });
-
-  it('initializeStorage writes the default shape once and keeps existing data', async () => {
-    await initializeStorage();
-    expect(stored().contacts).toEqual([]);
-
-    await saveData([makeContact()], [], []);
-    await initializeStorage();
-    expect(stored().contacts).toHaveLength(1);
   });
 
   it('saveData merges with existing records and lets the newer copy win', async () => {

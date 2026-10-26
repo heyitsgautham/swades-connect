@@ -17,16 +17,6 @@ const DEFAULT_DATA: StorageSchema['odoo_data'] = {
   lastSync: 0,
 };
 
-// Initialize default storage structure
-export async function initializeStorage(): Promise<void> {
-  const existing = await chrome.storage.local.get(STORAGE_KEY);
-  if (!existing[STORAGE_KEY]) {
-    await chrome.storage.local.set({
-      [STORAGE_KEY]: DEFAULT_DATA,
-    });
-  }
-}
-
 const log = createLogger('storage');
 
 const RECORD_SCHEMAS = {
@@ -125,7 +115,7 @@ export async function deleteAllRecords(type: 'contacts' | 'opportunities' | 'act
 // Clear all data
 export async function clearAll(): Promise<void> {
   await chrome.storage.local.clear();
-  await initializeStorage();
+  await chrome.storage.local.set({ [STORAGE_KEY]: structuredClone(DEFAULT_DATA) });
 }
 
 // Helper: Deduplicate records by ID, keeping newer records (last one wins)

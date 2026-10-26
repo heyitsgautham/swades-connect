@@ -37,10 +37,6 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
       ],
     });
     const serviceWorker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
-    // initializeStorage writes the empty default on startup; wait for it so it cannot overwrite a test's data.
-    await expect
-      .poll(() => serviceWorker.evaluate(async () => 'odoo_data' in (await chrome.storage.local.get('odoo_data'))))
-      .toBe(true);
     await use({ context, serviceWorker, id: new URL(serviceWorker.url()).host });
     await context.close();
   },
